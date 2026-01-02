@@ -85,7 +85,7 @@
             Number.isFinite(year) &&
             year >= START_YEAR &&
             year <= LAST_OBSERVED_YEAR &&
-            (r[GENDER_COL] === "Men" || r[GENDER_COL] === "Women") &&
+            (r[GENDER_COL] === "Men+" || r[GENDER_COL] === "Women+") &&
             r[AGE_COL] !== "All ages" &&
             r[VAL_COL] !== "" &&
             r[VAL_COL] != null
@@ -138,8 +138,8 @@
 
           if (idx === -1 || !Number.isFinite(value)) continue;
 
-          if (gender === "Men") observed[year].male[idx] = value;
-          if (gender === "Women") observed[year].female[idx] = value;
+          if (gender === "Men+") observed[year].male[idx] = value;
+          if (gender === "Women+") observed[year].female[idx] = value;
         }
 
         // Sanity check: count missing cells
