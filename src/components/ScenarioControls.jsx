@@ -32,12 +32,7 @@ export function ScenarioControls({ scenarios, onScenarioChange, onReset }) {
               {scenarios.fertility > 0 ? '+' : ''}{scenarios.fertility}%
             </span>
           </div>
-          <div className="baseline-display">
-            <span className="baseline-label">Current TFR:</span>
-            <span className="baseline-value">{adjustedFertility.toFixed(2)}</span>
-            <span className="baseline-label" style={{ marginLeft: '1rem' }}>Baseline:</span>
-            <span className="baseline-original">{BASELINE_FERTILITY.toFixed(2)}</span>
-          </div>
+          
           <input
             type="range"
             min="-50"
@@ -47,10 +42,22 @@ export function ScenarioControls({ scenarios, onScenarioChange, onReset }) {
             onChange={(e) => onScenarioChange('fertility', parseInt(e.target.value))}
             className="slider"
           />
+          
           <div className="scenario-markers">
             <span>-50%</span>
             <span className="baseline-marker">0%</span>
             <span>+100%</span>
+          </div>
+          
+          <div className="baseline-display">
+            <div className="baseline-item">
+              <span className="baseline-label">Current TFR:</span>
+              <span className="baseline-value">{adjustedFertility.toFixed(2)}</span>
+            </div>
+            <div className="baseline-item">
+              <span className="baseline-label">Baseline:</span>
+              <span className="baseline-original">{BASELINE_FERTILITY.toFixed(2)}</span>
+            </div>
           </div>
         </div>
 
@@ -65,12 +72,7 @@ export function ScenarioControls({ scenarios, onScenarioChange, onReset }) {
               {scenarios.mortality > 0 ? '+' : ''}{scenarios.mortality}%
             </span>
           </div>
-          <div className="baseline-display">
-            <span className="baseline-label">Current Rate:</span>
-            <span className="baseline-value">{adjustedMortality.toFixed(1)} per 1000</span>
-            <span className="baseline-label" style={{ marginLeft: '1rem' }}>Baseline:</span>
-            <span className="baseline-original">{BASELINE_MORTALITY.toFixed(1)} per 1000</span>
-          </div>
+          
           <input
             type="range"
             min="-50"
@@ -80,10 +82,22 @@ export function ScenarioControls({ scenarios, onScenarioChange, onReset }) {
             onChange={(e) => onScenarioChange('mortality', parseInt(e.target.value))}
             className="slider"
           />
+          
           <div className="scenario-markers">
             <span>-50% (worse)</span>
             <span className="baseline-marker">0%</span>
             <span>+50% (better)</span>
+          </div>
+          
+          <div className="baseline-display">
+            <div className="baseline-item">
+              <span className="baseline-label">Current Rate:</span>
+              <span className="baseline-value">{adjustedMortality.toFixed(1)} per 1000</span>
+            </div>
+            <div className="baseline-item">
+              <span className="baseline-label">Baseline:</span>
+              <span className="baseline-original">{BASELINE_MORTALITY.toFixed(1)} per 1000</span>
+            </div>
           </div>
         </div>
 
@@ -98,12 +112,7 @@ export function ScenarioControls({ scenarios, onScenarioChange, onReset }) {
               {scenarios.migration > 0 ? '+' : ''}{scenarios.migration}%
             </span>
           </div>
-          <div className="baseline-display">
-            <span className="baseline-label">Current:</span>
-            <span className="baseline-value">{adjustedMigration.toLocaleString()}</span>
-            <span className="baseline-label" style={{ marginLeft: '1rem' }}>Baseline:</span>
-            <span className="baseline-original">{BASELINE_MIGRATION.toLocaleString()}</span>
-          </div>
+          
           <input
             type="range"
             min="-75"
@@ -113,10 +122,22 @@ export function ScenarioControls({ scenarios, onScenarioChange, onReset }) {
             onChange={(e) => onScenarioChange('migration', parseInt(e.target.value))}
             className="slider"
           />
+          
           <div className="scenario-markers">
             <span>-75%</span>
             <span className="baseline-marker">0%</span>
             <span>+150%</span>
+          </div>
+          
+          <div className="baseline-display">
+            <div className="baseline-item">
+              <span className="baseline-label">Current:</span>
+              <span className="baseline-value">{adjustedMigration.toLocaleString()}</span>
+            </div>
+            <div className="baseline-item">
+              <span className="baseline-label">Baseline:</span>
+              <span className="baseline-original">{BASELINE_MIGRATION.toLocaleString()}</span>
+            </div>
           </div>
         </div>
       </div>
