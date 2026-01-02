@@ -11,8 +11,8 @@ export function PopulationStatsTable({ data, scenarios, selectedYear }) {
   const tableData = useMemo(() => {
     if (!data) return [];
 
-    // Show every 5 years for readability
-    const years = [...data.yearsObserved, ...data.yearsProjected].filter(y => y % 5 === 0);
+    // Show EVERY year instead of every 5 years
+    const years = [...data.yearsObserved, ...data.yearsProjected];
     
     let previousTotal = null;
     
@@ -27,7 +27,7 @@ export function PopulationStatsTable({ data, scenarios, selectedYear }) {
       let percentGrowth = 0;
       if (previousTotal !== null) {
         nominalGrowth = total - previousTotal;
-        percentGrowth = ((nominalGrowth / previousTotal) * 100) / 5; // Per year average
+        percentGrowth = (nominalGrowth / previousTotal) * 100; // Per year
       }
 
       // Estimate demographic indicators based on scenario adjustments
@@ -62,7 +62,8 @@ export function PopulationStatsTable({ data, scenarios, selectedYear }) {
     <div className="population-stats-table-container">
       <h2 className="section-heading">📊 Demographic Statistics</h2>
       <div className="table-description">
-        Showing data every 5 years. Historical data (2000-{data.lastObservedYear}) uses actual Statistics Canada figures. 
+        Showing data for every year from {data.yearsObserved[0]} to {data.lastProjectedYear}. 
+        Historical data ({data.yearsObserved[0]}-{data.lastObservedYear}) uses actual Statistics Canada figures. 
         Projected data ({data.yearsProjected[0]}-{data.lastProjectedYear}) shows calculated estimates with current scenario adjustments.
       </div>
       
