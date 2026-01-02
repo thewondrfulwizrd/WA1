@@ -5,9 +5,7 @@ import './PopulationStatsTable.css';
 
 const BASELINE_MIGRATION = 400000;
 const BASELINE_FERTILITY = 1.5;
-const BASELINE_MORTALITY = 75;
-const BIRTHS_PER_TFR = 200000; // Approximate multiplier for TFR to births
-const DEATHS_PER_MORTALITY = 300000; // Approximate multiplier for mortality rate
+const BASELINE_MORTALITY = 8.0; // Deaths per 1000 population (realistic rate for Canada)
 
 export function PopulationStatsTable({ data, scenarios, selectedYear }) {
   const tableData = useMemo(() => {
@@ -34,11 +32,12 @@ export function PopulationStatsTable({ data, scenarios, selectedYear }) {
 
       // Estimate demographic indicators based on scenario adjustments
       const adjustedFertility = BASELINE_FERTILITY * (1 + scenarios.fertility / 100);
-      const adjustedMortality = BASELINE_MORTALITY * (1 + scenarios.mortality / 100);
+      const adjustedMortality = BASELINE_MORTALITY * (1 - scenarios.mortality / 100); // Lower is better
       const adjustedMigration = Math.round(BASELINE_MIGRATION * (1 + scenarios.migration / 100));
       
-      const births = Math.round(total * (adjustedFertility / 1000));
-      const deaths = Math.round(total * (adjustedMortality / 1000));
+      // Calculate births and deaths based on population and rates
+      const births = Math.round((total / 1000) * (adjustedFertility * 6.67)); // TFR to crude birth rate approximation
+      const deaths = Math.round((total / 1000) * adjustedMortality); // Deaths per 1000
       const naturalIncrease = births - deaths;
       const netMigration = adjustedMigration;
 
@@ -59,11 +58,14 @@ export function PopulationStatsTable({ data, scenarios, selectedYear }) {
 
   if (!tableData.length) return null;
 
-  const isHistorical = selectedYear <= data.lastObservedYear;
-
   return (
     <div className="population-stats-table-container">
-      <h3>📊 Demographic Statistics (Every 5 Years)</h3>
+      <h2 className="section-heading">📊 Demographic Statistics</h2>
+      <div className="table-description">
+        Showing data every 5 years. Historical data (2000-{data.lastObservedYear}) uses actual Statistics Canada figures. 
+        Projected data ({data.yearsProjected[0]}-{data.lastProjectedYear}) shows calculated estimates with current scenario adjustments.
+      </div>
+      
       <div className="table-wrapper">
         <table className="population-stats-table">
           <thead>
@@ -110,14 +112,6 @@ export function PopulationStatsTable({ data, scenarios, selectedYear }) {
             ))}
           </tbody>
         </table>
-      </div>
-      <div className="table-notes">
-        <p>
-          <strong>Notes:</strong> 
-          Births, deaths, and migration are calculated based on baseline demographic rates adjusted by scenario parameters. 
-          Historical data (2000-{data.lastObservedYear}) uses actual Statistics Canada figures. 
-          Projected data ({data.yearsProjected[0]}-{data.lastProjectedYear}) shows calculated estimates with current scenario adjustments.
-        </p>
       </div>
     </div>
   );
