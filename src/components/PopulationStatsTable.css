@@ -10,7 +10,7 @@
 .population-stats-table-container .section-heading {
   font-size: 1.75rem;
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text);
+  color: #000000;
   margin: 0 0 var(--space-16) 0;
   padding-bottom: var(--space-12);
   border-bottom: 2px solid var(--color-border);
@@ -18,7 +18,7 @@
 
 .table-description {
   font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
+  color: #333333;
   margin-bottom: var(--space-20);
   line-height: 1.6;
 }
@@ -45,7 +45,7 @@
   padding: var(--space-12) var(--space-8);
   text-align: left;
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text);
+  color: #000000;
   white-space: nowrap;
   font-size: var(--font-size-xs);
   text-transform: uppercase;
@@ -67,11 +67,11 @@
 }
 
 .population-stats-table tbody tr.historical td {
-  color: var(--color-text);
+  color: #000000;
 }
 
 .population-stats-table tbody tr.projected td {
-  color: var(--color-text-secondary);
+  color: #333333;
 }
 
 .population-stats-table td {
@@ -82,7 +82,7 @@
 .population-stats-table .year-cell {
   text-align: left;
   font-weight: var(--font-weight-semibold);
-  color: var(--color-text);
+  color: #000000;
   position: sticky;
   left: 0;
   background: inherit;
@@ -106,7 +106,7 @@
 
 .population-stats-table .number-cell {
   font-family: var(--font-family-mono);
-  color: var(--color-text);
+  color: #000000;
 }
 
 .population-stats-table .growth-cell {
