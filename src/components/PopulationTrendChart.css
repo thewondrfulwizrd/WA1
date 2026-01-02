@@ -7,13 +7,55 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-.population-trend-chart h3 {
-  margin: 0 0 var(--space-20) 0;
-  font-size: 1.75rem;
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text);
+.chart-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-20);
   padding-bottom: var(--space-12);
   border-bottom: 2px solid var(--color-border);
+  flex-wrap: wrap;
+  gap: var(--space-16);
+}
+
+.population-trend-chart h3 {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: var(--font-weight-semibold);
+  color: #000000;
+}
+
+.selected-year-badge {
+  display: flex;
+  align-items: center;
+  gap: var(--space-10);
+  padding: var(--space-10) var(--space-16);
+  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+  border-radius: var(--radius-base);
+  box-shadow: 0 2px 6px rgba(25, 118, 210, 0.3);
+}
+
+.badge-label {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.badge-year {
+  font-size: 1.25rem;
+  color: white;
+  font-weight: var(--font-weight-bold);
+}
+
+.badge-population {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.95);
+  font-weight: var(--font-weight-semibold);
+  padding: var(--space-2) var(--space-8);
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-sm);
 }
 
 .chart-container {
@@ -83,18 +125,18 @@
 
 /* Axes */
 .axis-line {
-  stroke: #666;
+  stroke: #000000;
   stroke-width: 2;
 }
 
 .axis-label {
-  fill: #666;
+  fill: #000000;
   font-size: 12px;
   font-weight: 500;
 }
 
 .axis-title {
-  fill: #424242;
+  fill: #000000;
   font-size: 13px;
   font-weight: 600;
   text-transform: uppercase;
@@ -152,7 +194,7 @@
 
 .legend-text {
   font-size: 0.9rem;
-  color: var(--color-text);
+  color: #000000;
   font-weight: var(--font-weight-medium);
   line-height: 1.4;
 }
@@ -174,7 +216,7 @@
 
 .stat-label {
   font-size: 0.75rem;
-  color: var(--color-text-secondary);
+  color: #333333;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: var(--font-weight-semibold);
@@ -183,7 +225,7 @@
 .stat-value {
   font-size: 1.1rem;
   font-weight: var(--font-weight-bold);
-  color: var(--color-text);
+  color: #000000;
   line-height: 1.2;
 }
 
@@ -194,6 +236,16 @@
 
   .chart-container {
     padding: var(--space-12);
+  }
+
+  .chart-title-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .selected-year-badge {
+    width: 100%;
+    justify-content: center;
   }
 
   .chart-footer {
