@@ -7,55 +7,13 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-.chart-title-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-20);
-  padding-bottom: var(--space-12);
-  border-bottom: 2px solid var(--color-border);
-  flex-wrap: wrap;
-  gap: var(--space-16);
-}
-
 .population-trend-chart h3 {
-  margin: 0;
+  margin: 0 0 var(--space-20) 0;
   font-size: 1.75rem;
   font-weight: var(--font-weight-semibold);
   color: #000000;
-}
-
-.selected-year-badge {
-  display: flex;
-  align-items: center;
-  gap: var(--space-10);
-  padding: var(--space-10) var(--space-16);
-  background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
-  border-radius: var(--radius-base);
-  box-shadow: 0 2px 6px rgba(25, 118, 210, 0.3);
-}
-
-.badge-label {
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.9);
-  font-weight: var(--font-weight-medium);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.badge-year {
-  font-size: 1.25rem;
-  color: white;
-  font-weight: var(--font-weight-bold);
-}
-
-.badge-population {
-  font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.95);
-  font-weight: var(--font-weight-semibold);
-  padding: var(--space-2) var(--space-8);
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: var(--radius-sm);
+  padding-bottom: var(--space-12);
+  border-bottom: 2px solid var(--color-border);
 }
 
 .chart-container {
@@ -123,6 +81,12 @@
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
+.current-year-label {
+  fill: #1976d2;
+  font-size: 14px;
+  font-weight: 700;
+}
+
 /* Axes */
 .axis-line {
   stroke: #000000;
@@ -143,90 +107,53 @@
   letter-spacing: 0.5px;
 }
 
-/* Chart footer */
-.chart-footer {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: var(--space-24);
+/* Simplified chart footer */
+.chart-footer-simple {
+  display: flex;
+  justify-content: center;
   align-items: center;
-  padding: var(--space-16);
+  gap: var(--space-32);
+  padding: var(--space-24) var(--space-16);
   background: var(--color-bg-1);
   border-radius: var(--radius-base);
   border: 1px solid var(--color-border);
 }
 
-/* Legend */
-.chart-legend {
+.population-display,
+.change-display {
   display: flex;
   flex-direction: column;
-  gap: var(--space-10);
-}
-
-.legend-item {
-  display: flex;
   align-items: center;
-  gap: var(--space-10);
+  gap: var(--space-8);
 }
 
-.legend-color {
-  width: 28px;
-  height: 4px;
-  border-radius: 2px;
-  flex-shrink: 0;
-}
-
-.legend-color.historical {
-  background: linear-gradient(to right, #1976d2, #1976d2);
-}
-
-.legend-color.projected {
-  background: linear-gradient(to right, #7b1fa2, #7b1fa2);
-}
-
-.legend-color.current {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #1976d2;
-  border: 2px solid white;
-  box-shadow: 0 0 0 1px #1976d2;
-}
-
-.legend-text {
-  font-size: 0.9rem;
-  color: #000000;
-  font-weight: var(--font-weight-medium);
-  line-height: 1.4;
-}
-
-/* Chart stats */
-.chart-stats {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-12);
-  padding-left: var(--space-20);
-  border-left: 2px solid var(--color-border);
-}
-
-.stat-item {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.stat-label {
-  font-size: 0.75rem;
-  color: #333333;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-weight: var(--font-weight-semibold);
-}
-
-.stat-value {
-  font-size: 1.1rem;
+.population-main {
+  font-size: 3rem;
   font-weight: var(--font-weight-bold);
   color: #000000;
-  line-height: 1.2;
+  line-height: 1;
+}
+
+.population-label {
+  font-size: 0.9rem;
+  color: #333333;
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.change-value {
+  font-size: 2.5rem;
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+}
+
+.change-label {
+  font-size: 0.9rem;
+  color: #333333;
+  font-weight: var(--font-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 @media (max-width: 768px) {
@@ -238,28 +165,17 @@
     padding: var(--space-12);
   }
 
-  .chart-title-row {
+  .chart-footer-simple {
     flex-direction: column;
-    align-items: flex-start;
+    gap: var(--space-20);
   }
 
-  .selected-year-badge {
-    width: 100%;
-    justify-content: center;
+  .population-main {
+    font-size: 2.5rem;
   }
 
-  .chart-footer {
-    grid-template-columns: 1fr;
-    gap: var(--space-16);
-  }
-
-  .chart-stats {
-    padding-left: 0;
-    padding-top: var(--space-16);
-    border-left: none;
-    border-top: 2px solid var(--color-border);
-    flex-direction: row;
-    justify-content: space-around;
+  .change-value {
+    font-size: 2rem;
   }
 
   .axis-label {
@@ -268,13 +184,5 @@
 
   .axis-title {
     font-size: 11px;
-  }
-
-  .legend-text {
-    font-size: 0.85rem;
-  }
-
-  .stat-value {
-    font-size: 1rem;
   }
 }
