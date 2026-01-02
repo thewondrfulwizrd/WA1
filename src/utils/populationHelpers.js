@@ -1,18 +1,20 @@
 // Get population for a specific year
 export function getPopulationByYear(data, year) {
   if (year <= data.lastObservedYear) {
-    const yearIndex = data.yearsObserved.indexOf(year);
-    return {
-      male: data.populationObserved.male[yearIndex],
-      female: data.populationObserved.female[yearIndex]
-    };
+    // For observed years, access from 'observed' object
+    if (data.observed && data.observed[year.toString()]) {
+      return data.observed[year.toString()];
+    }
   } else {
-    const yearIndex = data.yearsProjected.indexOf(year);
-    return {
-      male: data.populationProjected.male[yearIndex],
-      female: data.populationProjected.female[yearIndex]
-    };
+    // For projected years, access from 'projected' object
+    if (data.projected && data.projected[year.toString()]) {
+      return data.projected[year.toString()];
+    }
   }
+  
+  // Fallback in case year not found
+  console.warn(`Population data not found for year ${year}`);
+  return null;
 }
 
 // Calculate total population for a specific year
