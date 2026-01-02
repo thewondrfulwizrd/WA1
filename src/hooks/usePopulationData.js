@@ -8,13 +8,29 @@ export function usePopulationData() {
 
   useEffect(() => {
     fetch('/data/canada_age_sex_observed_projected_2000_2100_v2.json')
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+      })
       .then(jsonData => {
+        // Validate data structure
+        if (!jsonData.observed || !jsonData.projected || !jsonData.ages) {
+          throw new Error('Invalid data structure: missing observed, projected, or ages');
+        }
+        
+        if (!jsonData.yearsObserved || !jsonData.yearsProjected) {
+          throw new Error('Invalid data structure: missing yearsObserved or yearsProjected');
+        }
+        
         setData(jsonData);
         setLoading(false);
         console.log('✓ Data loaded successfully');
-        console.log(`  Years: ${jsonData.yearsObserved}-${jsonData.lastProjectedYear}`);
+        console.log(`  Observed years: ${jsonData.yearsObserved[0]}-${jsonData.lastObservedYear}`);
+        console.log(`  Projected years: ${jsonData.yearsProjected[0]}-${jsonData.lastProjectedYear}`);
         console.log(`  Age groups: ${jsonData.ages.length}`);
+        console.log(`  Data structure validated: has 'observed' and 'projected' objects`);
       })
       .catch(err => {
         setError(err);
