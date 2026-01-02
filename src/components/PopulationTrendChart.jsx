@@ -58,10 +58,13 @@ export function PopulationTrendChart({ data, scenarios, selectedYear }) {
   const baseYearPopulation = chartData[baseYearIndex]?.total || currentPopulation;
   
   // Calculate change from 2025
-  let changeFrom2025 = '-';
+  let changeFrom2025Percent = '-';
+  let changeFrom2025Nominal = '-';
   if (selectedYear >= 2025) {
-    const change = ((currentPopulation - baseYearPopulation) / baseYearPopulation) * 100;
-    changeFrom2025 = `${change >= 0 ? '+' : ''}${change.toFixed(1)}%`;
+    const nominalChange = currentPopulation - baseYearPopulation;
+    const percentChange = (nominalChange / baseYearPopulation) * 100;
+    changeFrom2025Percent = `${percentChange >= 0 ? '+' : ''}${percentChange.toFixed(1)}%`;
+    changeFrom2025Nominal = `${nominalChange >= 0 ? '+' : ''}${(nominalChange / 1000000).toFixed(2)}M`;
   }
 
   // Y-axis labels
@@ -273,8 +276,8 @@ export function PopulationTrendChart({ data, scenarios, selectedYear }) {
           <div className="population-label">Population in {selectedYear}</div>
         </div>
         <div className="change-display">
-          <div className="change-value" style={{ color: changeFrom2025 === '-' ? '#666' : (changeFrom2025.startsWith('+') ? '#2e7d32' : '#c62828') }}>
-            {changeFrom2025}
+          <div className="change-value" style={{ color: changeFrom2025Percent === '-' ? '#666' : (changeFrom2025Percent.startsWith('+') ? '#2e7d32' : '#c62828') }}>
+            {changeFrom2025Nominal} ({changeFrom2025Percent})
           </div>
           <div className="change-label">Change from 2025</div>
         </div>
