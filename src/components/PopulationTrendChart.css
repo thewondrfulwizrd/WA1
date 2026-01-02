@@ -1,0 +1,148 @@
+.population-trend-chart {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-20);
+  margin: var(--space-20) 0;
+}
+
+.population-trend-chart h3 {
+  margin: 0 0 var(--space-16) 0;
+  font-size: var(--font-size-lg);
+}
+
+.chart-container {
+  width: 100%;
+  background: var(--color-bg-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-base);
+  padding: var(--space-16);
+  margin-bottom: var(--space-16);
+}
+
+.chart-container svg {
+  overflow: visible;
+}
+
+/* Grid lines */
+.grid-line {
+  stroke: var(--color-border);
+  stroke-width: 0.5;
+  stroke-dasharray: 2,2;
+}
+
+/* Divider between observed and projected */
+.divider-line {
+  stroke: var(--color-text-secondary);
+  stroke-width: 1;
+  stroke-dasharray: 3,3;
+  opacity: 0.5;
+}
+
+/* Trend line */
+.trend-line {
+  stroke: var(--color-primary);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+}
+
+/* Data points */
+.data-point {
+  fill: var(--color-primary);
+  opacity: 0.3;
+  transition: all var(--duration-fast) var(--ease-standard);
+}
+
+.data-point.active {
+  fill: var(--color-primary);
+  r: 3;
+  opacity: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+/* Current year indicator */
+.current-year-line {
+  stroke: var(--color-primary);
+  stroke-width: 1.5;
+  opacity: 0.4;
+  stroke-dasharray: 2,4;
+}
+
+/* Legend */
+.chart-legend {
+  display: flex;
+  gap: var(--space-16);
+  margin-bottom: var(--space-16);
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.legend-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.legend-value {
+  font-size: var(--font-size-sm);
+  color: var(--color-text);
+  font-weight: var(--font-weight-medium);
+}
+
+/* Chart stats */
+.chart-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-12);
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-12);
+  background: var(--color-secondary);
+  border-radius: var(--radius-base);
+  border-left: 3px solid var(--color-primary);
+}
+
+.stat-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+}
+
+@media (max-width: 768px) {
+  .population-trend-chart {
+    padding: var(--space-16);
+  }
+
+  .chart-container {
+    padding: var(--space-12);
+  }
+
+  .chart-legend {
+    flex-direction: column;
+    gap: var(--space-8);
+  }
+
+  .chart-stats {
+    grid-template-columns: 1fr;
+  }
+}
