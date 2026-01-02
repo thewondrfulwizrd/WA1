@@ -51,6 +51,7 @@ export function PopulationTrendChart({ data, scenarios, selectedYear }) {
   // Highlight current year
   const currentIndex = chartData.findIndex(d => d.year === selectedYear);
   const currentPoint = points[currentIndex];
+  const currentPopulation = chartData[currentIndex]?.total;
 
   // Y-axis labels
   const yAxisLabels = [];
@@ -72,7 +73,14 @@ export function PopulationTrendChart({ data, scenarios, selectedYear }) {
 
   return (
     <div className="population-trend-chart">
-      <h3>📈 Population Trend (2000-2100)</h3>
+      <div className="chart-title-row">
+        <h3>📈 Population Trend (2000-2100)</h3>
+        <div className="selected-year-badge">
+          <span className="badge-label">Selected Year:</span>
+          <span className="badge-year">{selectedYear}</span>
+          <span className="badge-population">{(currentPopulation / 1000000).toFixed(2)}M</span>
+        </div>
+      </div>
       
       <div className="chart-container">
         <svg width="100%" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMidYMid meet">
