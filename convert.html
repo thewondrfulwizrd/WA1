@@ -6,13 +6,14 @@
     <title>Convert StatCan 17100005 → observed JSON</title>
     <style>
       body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 24px; }
-      button { padding: 10px 14px; }
+      button { padding: 10px 14px; cursor: pointer; }
       pre { background: #f6f8fa; padding: 12px; border-radius: 8px; overflow: auto; }
+      code { background: #f6f8fa; padding: 2px 6px; border-radius: 6px; }
     </style>
   </head>
   <body>
     <h1>Convert 17100005.csv → observed (2000–2025)</h1>
-    <p>This reads <code>/data/17100005.csv</code> from your GitHub Pages site and downloads a JSON file.</p>
+    <p>Reads <code>/data/17100005.csv</code> and downloads a JSON file.</p>
     <button id="run">Run conversion</button>
     <pre id="log"></pre>
 
@@ -35,36 +36,53 @@
       const LAST_OBSERVED_YEAR = 2025;
 
       document.getElementById("run").onclick = async () => {
+        logEl.textContent = "";
+
         log("Fetching /data/17100005.csv ...");
         const res = await fetch("./data/17100005.csv", { cache: "no-store" });
-        if (!res.ok) throw new Error(`Failed to fetch CSV: HTTP ${res.status}`);
+        if (!res.ok) {
+          log(`Failed: HTTP ${res.status}`);
+          throw new Error(`Failed to fetch CSV: HTTP ${res.status}`);
+        }
         const csvText = await res.text();
+        log(`Fetched ${csvText.length.toLocaleString()} characters`);
 
         log("Parsing CSV (PapaParse) ...");
         const parsed = Papa.parse(csvText, {
           header: true,
           skipEmptyLines: true,
+
+          // IMPORTANT: strip UTF-8 BOM if present on the first header cell
+          // Your CSV header starts with ﻿"REF_DATE" (BOM before REF_DATE).
+          transformHeader: (h) => (h || "").replace(/^\uFEFF/, "").trim()
         });
 
         if (parsed.errors?.length) {
-          log("Parse errors:");
+          log("Parse warnings/errors (first 5):");
           parsed.errors.slice(0, 5).forEach(e => log(JSON.stringify(e)));
         }
 
-        const rows = parsed.data;
+        const rows = parsed.data || [];
+        log(`Total parsed rows: ${rows.length.toLocaleString()}`);
 
-        // Column names as they appear in your file
+        // These match the column names in your CSV (after transformHeader).
         const YEAR_COL = "REF_DATE";
         const GEO_COL = "GEO";
         const GENDER_COL = "Gender";
         const AGE_COL = "Age group";
         const VAL_COL = "VALUE";
 
-        // Filter to Canada, 2000–2025, Men/Women, and age groups (exclude "All ages")
+        // Helpful debug: show detected headers from the first row
+        const firstRow = rows[0] || {};
+        log("Detected columns (from first row):");
+        log(Object.keys(firstRow).join(", ") || "(none)");
+
+        // Filter to Canada, 2000–2025, Men/Women, and real age groups (exclude "All ages")
         const slice = rows.filter(r => {
           const year = Number(r[YEAR_COL]);
           return (
             r[GEO_COL] === "Canada" &&
+            Number.isFinite(year) &&
             year >= START_YEAR &&
             year <= LAST_OBSERVED_YEAR &&
             (r[GENDER_COL] === "Men" || r[GENDER_COL] === "Women") &&
@@ -74,20 +92,41 @@
           );
         });
 
-        log(`Rows after filter: ${slice.length}`);
+        log(`Rows after filter: ${slice.length.toLocaleString()}`);
 
-        // Collect and order age groups based on first-seen order in the file
+        // If still zero, show a sample of the key fields to diagnose quickly
+        if (slice.length === 0) {
+          const sample = rows.slice(0, 3).map(r => ({
+            REF_DATE: r[YEAR_COL],
+            GEO: r[GEO_COL],
+            Gender: r[GENDER_COL],
+            "Age group": r[AGE_COL],
+            VALUE: r[VAL_COL],
+          }));
+          log("Sample of first 3 rows (mapped fields):");
+          log(JSON.stringify(sample, null, 2));
+          throw new Error("Filter produced 0 rows. See debug output above.");
+        }
+
+        // Collect age groups in a stable order (first-seen order in the filtered data)
         const ages = [];
         const agesSeen = new Set();
         for (const r of slice) {
           const a = r[AGE_COL];
-          if (!agesSeen.has(a)) { agesSeen.add(a); ages.push(a); }
+          if (!agesSeen.has(a)) {
+            agesSeen.add(a);
+            ages.push(a);
+          }
         }
+        log(`Age groups found: ${ages.length}`);
 
-        // observed[year] = { male: [...], female: [...] } aligned to `ages`
+        // Build observed[year] = { male: [...], female: [...] } aligned to ages[]
         const observed = {};
         for (let y = START_YEAR; y <= LAST_OBSERVED_YEAR; y++) {
-          observed[String(y)] = { male: Array(ages.length).fill(null), female: Array(ages.length).fill(null) };
+          observed[String(y)] = {
+            male: Array(ages.length).fill(null),
+            female: Array(ages.length).fill(null)
+          };
         }
 
         for (const r of slice) {
@@ -97,12 +136,13 @@
           const value = Number(r[VAL_COL]);
           const idx = ages.indexOf(age);
 
-          if (idx === -1) continue;
+          if (idx === -1 || !Number.isFinite(value)) continue;
+
           if (gender === "Men") observed[year].male[idx] = value;
           if (gender === "Women") observed[year].female[idx] = value;
         }
 
-        // sanity check: look for missing values
+        // Sanity check: count missing cells
         let missing = 0;
         for (let y = START_YEAR; y <= LAST_OBSERVED_YEAR; y++) {
           const yr = String(y);
@@ -120,8 +160,9 @@
           observed
         };
 
-        downloadJSON(`canada_age_sex_observed_${START_YEAR}_${LAST_OBSERVED_YEAR}.json`, out);
-        log("Done — JSON downloaded.");
+        const filename = `canada_age_sex_observed_${START_YEAR}_${LAST_OBSERVED_YEAR}.json`;
+        downloadJSON(filename, out);
+        log(`Done — JSON downloaded: ${filename}`);
       };
     </script>
   </body>
