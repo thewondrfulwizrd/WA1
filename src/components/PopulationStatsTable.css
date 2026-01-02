@@ -18,7 +18,7 @@
 
 .table-description {
   font-size: var(--font-size-sm);
-  color: #333333;
+  color: #000000;
   margin-bottom: var(--space-20);
   line-height: 1.6;
 }
@@ -73,13 +73,9 @@
   background: #ffe69c;
 }
 
-/* All text is black - no greying out for historical vs projected */
-.population-stats-table tbody tr.historical td {
-  color: #000000;
-}
-
-.population-stats-table tbody tr.projected td {
-  color: #000000;
+/* All text is black by default */
+.population-stats-table tbody tr td {
+  color: #000000 !important;
 }
 
 .population-stats-table td {
@@ -90,7 +86,7 @@
 .population-stats-table .year-cell {
   text-align: left;
   font-weight: var(--font-weight-semibold);
-  color: #000000;
+  color: #000000 !important;
   position: sticky;
   left: 0;
   background: inherit;
@@ -101,12 +97,13 @@
 
 .population-stats-table .year-value {
   min-width: 50px;
+  color: #000000 !important;
 }
 
 .current-badge {
   font-size: var(--font-size-xs);
   background: #ffc107;
-  color: #000000;
+  color: #000000 !important;
   padding: var(--space-2) var(--space-6);
   border-radius: var(--radius-sm);
   font-weight: var(--font-weight-bold);
@@ -114,37 +111,41 @@
 
 .population-stats-table .number-cell {
   font-family: var(--font-family-mono);
-  color: #000000;
+  color: #000000 !important;
 }
 
 .population-stats-table .growth-cell {
   font-weight: var(--font-weight-medium);
+  color: #000000 !important;
 }
 
+/* Only percentage growth gets color */
 .population-stats-table .growth-cell.positive {
-  color: var(--color-success);
+  color: #2e7d32 !important;
 }
 
 .population-stats-table .growth-cell.negative {
-  color: var(--color-error);
+  color: #c62828 !important;
 }
 
+/* Migration stays black */
 .population-stats-table .migration-cell {
   font-weight: var(--font-weight-medium);
-  color: var(--color-info);
+  color: #000000 !important;
 }
 
-/* Natural increase styling */
+/* Natural increase stays black */
 .population-stats-table tbody tr td:nth-child(7) {
   font-weight: var(--font-weight-medium);
+  color: #000000 !important;
 }
 
 .population-stats-table tbody tr td:nth-child(7).positive {
-  color: var(--color-success);
+  color: #000000 !important;
 }
 
 .population-stats-table tbody tr td:nth-child(7).negative {
-  color: var(--color-error);
+  color: #000000 !important;
 }
 
 @media (max-width: 1024px) {
@@ -163,7 +164,7 @@
     padding: var(--space-16);
   }
 
-  .population-stats-table {
+  .population-stats-table {;
     font-size: var(--font-size-xs);
   }
 
