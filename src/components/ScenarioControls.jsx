@@ -20,12 +20,6 @@ export function ScenarioControls({ scenarios, onScenarioChange, onReset, isHisto
         </button>
       </div>
 
-      {isHistorical && (
-        <div className="scenario-disabled-message">
-          📌 Scenario adjustments only apply to projected years (2026+). Move the year slider forward to explore future scenarios.
-        </div>
-      )}
-
       <div className="scenario-sliders">
         {/* Fertility Rate Slider */}
         <div className="scenario-item">
