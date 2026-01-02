@@ -5,6 +5,13 @@
   padding: 0px 15px 15px;
 }
 
+.population-pyramid h1 {
+  margin: 20px 0 12px 0;
+  font-size: 2.2em;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
 .population-pyramid h2 {
   margin-top: -20px;        /* ← Removes default browser margin */
   margin-bottom: 12px;
