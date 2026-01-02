@@ -134,7 +134,8 @@ export function PopulationPyramid() {
 
       {/* Population Pyramid Section */}
       <div className="pyramid-section">
-        <h2 className="section-heading">📊 Population Pyramid</h2>
+        {/* Large Year Display instead of heading */}
+        <div className="pyramid-year-display">{selectedYear}</div>
         
         {/* Population Summary */}
         <div className="summary">
