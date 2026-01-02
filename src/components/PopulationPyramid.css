@@ -1,0 +1,127 @@
+/* src/components/PopulationPyramid.css */
+
+.population-pyramid {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.controls {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.controls input[type="range"] {
+  width: 100%;
+  margin: 10px 0;
+}
+
+.year-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-left: 10px;
+  font-size: 0.85em;
+}
+
+.year-badge.observed {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.year-badge.projected {
+  background-color: #f3e5f5;
+  color: #7b1fa2;
+}
+
+.summary {
+  display: flex;
+  justify-content: space-around;
+  margin: 20px 0;
+  padding: 20px;
+  background: #f5f5f5;
+  border-radius: 8px;
+}
+
+.stat {
+  text-align: center;
+}
+
+.stat .label {
+  display: block;
+  font-size: 0.9em;
+  color: #666;
+  margin-bottom: 5px;
+}
+
+.stat .value {
+  display: block;
+  font-size: 1.8em;
+  font-weight: bold;
+}
+
+.stat .value.male { color: #1976d2; }
+.stat .value.female { color: #c2185b; }
+.stat .value.total { color: #424242; }
+
+.pyramid-chart {
+  margin-top: 30px;
+}
+
+.pyramid-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 10px;
+  margin-bottom: 4px;
+  align-items: center;
+}
+
+.male-side, .female-side {
+  display: flex;
+  align-items: center;
+}
+
+.male-side {
+  justify-content: flex-end;
+}
+
+.female-side {
+  justify-content: flex-start;
+}
+
+.age-label {
+  padding: 0 15px;
+  font-size: 0.85em;
+  color: #666;
+  white-space: nowrap;
+  min-width: 120px;
+  text-align: center;
+}
+
+.bar {
+  height: 25px;
+  transition: width 0.3s ease;
+}
+
+.male-bar {
+  background: linear-gradient(to left, #1976d2, #42a5f5);
+  border-radius: 4px 0 0 4px;
+}
+
+.female-bar {
+  background: linear-gradient(to right, #c2185b, #f06292);
+  border-radius: 0 4px 4px 0;
+}
+
+.pop-value {
+  padding: 0 10px;
+  font-size: 0.8em;
+  color: #666;
+  min-width: 60px;
+  text-align: center;
+}
+
+.bar:hover {
+  opacity: 0.8;
+  cursor: pointer;
+}
