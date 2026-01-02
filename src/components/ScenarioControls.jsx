@@ -5,7 +5,7 @@ const BASELINE_FERTILITY = 1.5; // Total Fertility Rate
 const BASELINE_MORTALITY = 75; // Crude death rate per 1000 (inverse for simplicity)
 const BASELINE_MIGRATION = 400000; // Net migration per year
 
-export function ScenarioControls({ scenarios, onScenarioChange, onReset }) {
+export function ScenarioControls({ scenarios, onScenarioChange, onReset, isHistorical }) {
   // Calculate adjusted baseline figures
   const adjustedFertility = BASELINE_FERTILITY * (1 + scenarios.fertility / 100);
   const adjustedMortality = BASELINE_MORTALITY * (1 + scenarios.mortality / 100);
@@ -15,10 +15,16 @@ export function ScenarioControls({ scenarios, onScenarioChange, onReset }) {
     <div className="scenario-controls">
       <div className="scenario-header">
         <h3>📊 Scenario Builder</h3>
-        <button className="reset-button" onClick={onReset}>
+        <button className="reset-button" onClick={onReset} disabled={isHistorical}>
           Reset to Baseline
         </button>
       </div>
+
+      {isHistorical && (
+        <div className="scenario-disabled-message">
+          📌 Scenario adjustments only apply to projected years (2026+). Move the year slider forward to explore future scenarios.
+        </div>
+      )}
 
       <div className="scenario-sliders">
         {/* Fertility Rate Slider */}
@@ -41,6 +47,7 @@ export function ScenarioControls({ scenarios, onScenarioChange, onReset }) {
             step="5"
             onChange={(e) => onScenarioChange('fertility', parseInt(e.target.value))}
             className="slider"
+            disabled={isHistorical}
           />
           
           <div className="scenario-markers">
@@ -51,11 +58,11 @@ export function ScenarioControls({ scenarios, onScenarioChange, onReset }) {
           
           <div className="baseline-display">
             <div className="baseline-item">
-              <span className="baseline-label">Current TFR:</span>
+              <span className="baseline-label">Current TFR</span>
               <span className="baseline-value">{adjustedFertility.toFixed(2)}</span>
             </div>
             <div className="baseline-item">
-              <span className="baseline-label">Baseline:</span>
+              <span className="baseline-label">Baseline</span>
               <span className="baseline-original">{BASELINE_FERTILITY.toFixed(2)}</span>
             </div>
           </div>
@@ -81,6 +88,7 @@ export function ScenarioControls({ scenarios, onScenarioChange, onReset }) {
             step="5"
             onChange={(e) => onScenarioChange('mortality', parseInt(e.target.value))}
             className="slider"
+            disabled={isHistorical}
           />
           
           <div className="scenario-markers">
@@ -91,12 +99,12 @@ export function ScenarioControls({ scenarios, onScenarioChange, onReset }) {
           
           <div className="baseline-display">
             <div className="baseline-item">
-              <span className="baseline-label">Current Rate:</span>
-              <span className="baseline-value">{adjustedMortality.toFixed(1)} per 1000</span>
+              <span className="baseline-label">Current Rate</span>
+              <span className="baseline-value">{adjustedMortality.toFixed(1)}/1000</span>
             </div>
             <div className="baseline-item">
-              <span className="baseline-label">Baseline:</span>
-              <span className="baseline-original">{BASELINE_MORTALITY.toFixed(1)} per 1000</span>
+              <span className="baseline-label">Baseline</span>
+              <span className="baseline-original">{BASELINE_MORTALITY.toFixed(1)}/1000</span>
             </div>
           </div>
         </div>
@@ -121,6 +129,7 @@ export function ScenarioControls({ scenarios, onScenarioChange, onReset }) {
             step="5"
             onChange={(e) => onScenarioChange('migration', parseInt(e.target.value))}
             className="slider"
+            disabled={isHistorical}
           />
           
           <div className="scenario-markers">
@@ -131,18 +140,18 @@ export function ScenarioControls({ scenarios, onScenarioChange, onReset }) {
           
           <div className="baseline-display">
             <div className="baseline-item">
-              <span className="baseline-label">Current:</span>
+              <span className="baseline-label">Current</span>
               <span className="baseline-value">{adjustedMigration.toLocaleString()}</span>
             </div>
             <div className="baseline-item">
-              <span className="baseline-label">Baseline:</span>
+              <span className="baseline-label">Baseline</span>
               <span className="baseline-original">{BASELINE_MIGRATION.toLocaleString()}</span>
             </div>
           </div>
         </div>
       </div>
 
-      {(scenarios.fertility !== 0 || scenarios.mortality !== 0 || scenarios.migration !== 0) && (
+      {!isHistorical && (scenarios.fertility !== 0 || scenarios.mortality !== 0 || scenarios.migration !== 0) && (
         <div className="scenario-active-banner">
           ⚠️ Custom scenario active - viewing adjusted projections
         </div>
