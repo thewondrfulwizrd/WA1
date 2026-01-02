@@ -52,6 +52,17 @@ export function PopulationTrendChart({ data, scenarios, selectedYear }) {
   const currentIndex = chartData.findIndex(d => d.year === selectedYear);
   const currentPoint = points[currentIndex];
   const currentPopulation = chartData[currentIndex]?.total;
+  
+  // Calculate population at base year (2025)
+  const baseYearIndex = chartData.findIndex(d => d.year === 2025);
+  const baseYearPopulation = chartData[baseYearIndex]?.total || currentPopulation;
+  
+  // Calculate change from 2025
+  let changeFrom2025 = '-';
+  if (selectedYear >= 2025) {
+    const change = ((currentPopulation - baseYearPopulation) / baseYearPopulation) * 100;
+    changeFrom2025 = `${change >= 0 ? '+' : ''}${change.toFixed(1)}%`;
+  }
 
   // Y-axis labels
   const yAxisLabels = [];
@@ -73,14 +84,7 @@ export function PopulationTrendChart({ data, scenarios, selectedYear }) {
 
   return (
     <div className="population-trend-chart">
-      <div className="chart-title-row">
-        <h3>📈 Population Trend (2000-2100)</h3>
-        <div className="selected-year-badge">
-          <span className="badge-label">Selected Year:</span>
-          <span className="badge-year">{selectedYear}</span>
-          <span className="badge-population">{(currentPopulation / 1000000).toFixed(2)}M</span>
-        </div>
-      </div>
+      <h3>📈 Population Trend (2000-2100)</h3>
       
       <div className="chart-container">
         <svg width="100%" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMidYMid meet">
@@ -183,6 +187,15 @@ export function PopulationTrendChart({ data, scenarios, selectedYear }) {
                 r="4"
                 fill="white"
               />
+              {/* Year label beside the line on the chart */}
+              <text
+                x={currentPoint.x + 10}
+                y={padding.top + chartHeight + 20}
+                className="current-year-label"
+                textAnchor="start"
+              >
+                {selectedYear}
+              </text>
             </>
           )}
 
@@ -253,32 +266,19 @@ export function PopulationTrendChart({ data, scenarios, selectedYear }) {
         </svg>
       </div>
 
-      {/* Legend and stats */}
-      <div className="chart-footer">
-        <div className="chart-legend">
-          <div className="legend-item">
-            <span className="legend-color historical"></span>
-            <span className="legend-text">Historical ({data.yearsObserved[0]}-{data.lastObservedYear})</span>
+      {/* Simplified footer with population and change */}
+      <div className="chart-footer-simple">
+        <div className="population-display">
+          <div className="population-main">
+            {(currentPopulation / 1000000).toFixed(2)}M
           </div>
-          <div className="legend-item">
-            <span className="legend-color projected"></span>
-            <span className="legend-text">Projected ({data.yearsProjected[0]}-{data.lastProjectedYear})</span>
-          </div>
-          <div className="legend-item">
-            <span className="legend-color current"></span>
-            <span className="legend-text">Current Year: {selectedYear}</span>
-          </div>
+          <div className="population-label">Population in {selectedYear}</div>
         </div>
-
-        <div className="chart-stats">
-          <div className="stat-item">
-            <span className="stat-label">Range</span>
-            <span className="stat-value">{(minPop / 1000000).toFixed(1)}M - {(maxPop / 1000000).toFixed(1)}M</span>
+        <div className="change-display">
+          <div className="change-value" style={{ color: changeFrom2025 === '-' ? '#666' : (changeFrom2025.startsWith('+') ? '#2e7d32' : '#c62828') }}>
+            {changeFrom2025}
           </div>
-          <div className="stat-item">
-            <span className="stat-label">Total Growth</span>
-            <span className="stat-value">+{((popRange / minPop) * 100).toFixed(1)}%</span>
-          </div>
+          <div className="change-label">Change from 2025</div>
         </div>
       </div>
     </div>
