@@ -28,6 +28,16 @@
   border-bottom: 2px solid var(--color-border);
 }
 
+/* Large year display for pyramid section */
+.pyramid-year-display {
+  font-size: 5rem;
+  font-weight: var(--font-weight-bold);
+  color: #000000;
+  text-align: center;
+  margin: 0 0 var(--space-24) 0;
+  line-height: 1;
+}
+
 .pyramid-section {
   margin: var(--space-24) 0;
 }
@@ -68,6 +78,7 @@
   cursor: pointer;
   border-radius: 50%;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  margin-top: -6px; /* Center the thumb on the track */
 }
 
 .controls input[type="range"]::-moz-range-thumb {
@@ -294,5 +305,15 @@
   
   .bar {
     height: 20px;
+  }
+  
+  .pyramid-year-display {
+    font-size: 4rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .pyramid-year-display {
+    font-size: 3rem;
   }
 }
