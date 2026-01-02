@@ -3,6 +3,8 @@ import { usePopulationData } from '../hooks/usePopulationData';
 import { getYearType, formatPopulation } from '../utils/populationHelpers';
 import { applyScenarios } from '../utils/scenarioCalculations';
 import { ScenarioControls } from './ScenarioControls';
+import { PopulationTrendChart } from './PopulationTrendChart';
+import { PopulationStatsTable } from './PopulationStatsTable';
 import './PopulationPyramid.css';
 
 export function PopulationPyramid() {
@@ -53,14 +55,14 @@ export function PopulationPyramid() {
 
   return (
     <div className="population-pyramid">
-      <h2>Canada Population Pyramid</h2>
+      <h1>Canada Population Growth Model, 2025-2100</h1>
       
       {/* Year Selector */}
       <div className="controls">
         <label>
           Year: {selectedYear}
           <span className={`year-badge ${yearType}`}>
-            {yearType === 'observed' ? '📊 Historical' : '🔮 Projected'}
+            {yearType === 'observed' ? '📈 Historical' : '🔮 Projected'}
           </span>
         </label>
         <input
@@ -101,6 +103,9 @@ export function PopulationPyramid() {
           onReset={handleReset}
         />
       )}
+
+      {/* Population Trend Chart */}
+      <PopulationTrendChart data={data} scenarios={scenarios} selectedYear={selectedYear} />
 
       {/* Population Summary */}
       <div className="summary">
@@ -156,6 +161,9 @@ export function PopulationPyramid() {
           );
         })}
       </div>
+
+      {/* Population Statistics Table */}
+      <PopulationStatsTable data={data} scenarios={scenarios} selectedYear={selectedYear} />
     </div>
   );
 }
