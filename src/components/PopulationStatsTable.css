@@ -61,17 +61,25 @@
   background: var(--color-secondary);
 }
 
+/* Highlighted row for selected year */
 .population-stats-table tbody tr.highlighted {
-  background: var(--color-bg-1);
+  background: #fff3cd;
+  border-top: 2px solid #ffc107;
+  border-bottom: 2px solid #ffc107;
   font-weight: var(--font-weight-semibold);
 }
 
+.population-stats-table tbody tr.highlighted:hover {
+  background: #ffe69c;
+}
+
+/* All text is black - no greying out for historical vs projected */
 .population-stats-table tbody tr.historical td {
   color: #000000;
 }
 
 .population-stats-table tbody tr.projected td {
-  color: #333333;
+  color: #000000;
 }
 
 .population-stats-table td {
@@ -97,11 +105,11 @@
 
 .current-badge {
   font-size: var(--font-size-xs);
-  background: var(--color-primary);
-  color: var(--color-btn-primary-text);
+  background: #ffc107;
+  color: #000000;
   padding: var(--space-2) var(--space-6);
   border-radius: var(--radius-sm);
-  font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-bold);
 }
 
 .population-stats-table .number-cell {
