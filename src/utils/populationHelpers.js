@@ -1,63 +1,49 @@
-// src/utils/populationHelpers.js
-
-/**
- * Get population for a specific year
- * @param {Object} data - Full dataset
- * @param {number} year - Year to retrieve (2000-2100)
- * @returns {Object} { male: Array, female: Array }
- */
+// Get population for a specific year
 export function getPopulationByYear(data, year) {
-  if (!data) return null;
-
   if (year <= data.lastObservedYear) {
-    return data.observed[year.toString()];
-  } else if (year <= data.lastProjectedYear) {
-    return data.projected[year.toString()];
+    const yearIndex = data.yearsObserved.indexOf(year);
+    return {
+      male: data.populationObserved.male[yearIndex],
+      female: data.populationObserved.female[yearIndex]
+    };
+  } else {
+    const yearIndex = data.yearsProjected.indexOf(year);
+    return {
+      male: data.populationProjected.male[yearIndex],
+      female: data.populationProjected.female[yearIndex]
+    };
   }
-
-  return null;
 }
 
-/**
- * Calculate total population for a year
- * @param {Object} data - Full dataset
- * @param {number} year - Year
- * @returns {Object} { male: number, female: number, total: number }
- */
+// Calculate total population for a specific year
 export function getTotalPopulation(data, year) {
-  const pop = getPopulationByYear(data, year);
-  if (!pop) return null;
-
-  const male = pop.male.reduce((sum, val) => sum + val, 0);
-  const female = pop.female.reduce((sum, val) => sum + val, 0);
-
+  const population = getPopulationByYear(data, year);
+  
+  if (!population) {
+    return null;
+  }
+  
+  const maleTotal = population.male.reduce((sum, val) => sum + val, 0);
+  const femaleTotal = population.female.reduce((sum, val) => sum + val, 0);
+  
   return {
-    male,
-    female,
-    total: male + female
+    male: maleTotal,
+    female: femaleTotal,
+    total: maleTotal + femaleTotal
   };
 }
 
-/**
- * Check if a year is projected vs observed
- * @param {Object} data - Full dataset
- * @param {number} year - Year
- * @returns {string} 'observed' | 'projected'
- */
+// Determine if a year is observed or projected
 export function getYearType(data, year) {
   return year <= data.lastObservedYear ? 'observed' : 'projected';
 }
 
-/**
- * Format population number for display
- * @param {number} num - Population number
- * @returns {string} Formatted string (e.g., "41.7M")
- */
+// Format population numbers for display
 export function formatPopulation(num) {
   if (num >= 1000000) {
-    return `${(num / 1000000).toFixed(1)}M`;
+    return (num / 1000000).toFixed(1) + 'M';
   } else if (num >= 1000) {
-    return `${(num / 1000).toFixed(0)}K`;
+    return (num / 1000).toFixed(1) + 'K';
   }
   return num.toString();
 }
