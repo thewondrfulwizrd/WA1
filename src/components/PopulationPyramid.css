@@ -90,6 +90,11 @@
   max-width: 1400px;
   margin-left: auto;
   margin-right: auto;
+  height: 20px;
+}
+
+.year-labels span {
+  font-weight: 500;
 }
 
 .year-badge {
