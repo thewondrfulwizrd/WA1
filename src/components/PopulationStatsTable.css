@@ -1,0 +1,182 @@
+.population-stats-table-container {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-20);
+  margin: var(--space-20) 0;
+}
+
+.population-stats-table-container h3 {
+  margin: 0 0 var(--space-16) 0;
+  font-size: var(--font-size-lg);
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-base);
+  margin-bottom: var(--space-16);
+}
+
+.population-stats-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.population-stats-table thead {
+  background: var(--color-secondary);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.population-stats-table th {
+  padding: var(--space-12) var(--space-8);
+  text-align: left;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  white-space: nowrap;
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.population-stats-table tbody tr {
+  border-bottom: 1px solid var(--color-border);
+  transition: background-color var(--duration-fast) var(--ease-standard);
+}
+
+.population-stats-table tbody tr:hover {
+  background: var(--color-secondary);
+}
+
+.population-stats-table tbody tr.highlighted {
+  background: var(--color-bg-1);
+  font-weight: var(--font-weight-semibold);
+}
+
+.population-stats-table tbody tr.historical td {
+  color: var(--color-text);
+}
+
+.population-stats-table tbody tr.projected td {
+  color: var(--color-text-secondary);
+}
+
+.population-stats-table td {
+  padding: var(--space-12) var(--space-8);
+  text-align: right;
+}
+
+.population-stats-table .year-cell {
+  text-align: left;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  position: sticky;
+  left: 0;
+  background: inherit;
+  display: flex;
+  align-items: center;
+  gap: var(--space-8);
+}
+
+.population-stats-table .year-value {
+  min-width: 50px;
+}
+
+.current-badge {
+  font-size: var(--font-size-xs);
+  background: var(--color-primary);
+  color: var(--color-btn-primary-text);
+  padding: var(--space-2) var(--space-6);
+  border-radius: var(--radius-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.population-stats-table .number-cell {
+  font-family: var(--font-family-mono);
+  color: var(--color-text);
+}
+
+.population-stats-table .growth-cell {
+  font-weight: var(--font-weight-medium);
+}
+
+.population-stats-table .growth-cell.positive {
+  color: var(--color-success);
+}
+
+.population-stats-table .growth-cell.negative {
+  color: var(--color-error);
+}
+
+.population-stats-table .migration-cell {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-info);
+}
+
+/* Natural increase styling */
+.population-stats-table tbody tr td:nth-child(7) {
+  font-weight: var(--font-weight-medium);
+}
+
+.population-stats-table tbody tr td:nth-child(7) {
+  color: var(--color-success);
+}
+
+.population-stats-table tbody tr.highlighted td:nth-child(7) {
+  color: var(--color-success);
+}
+
+.table-notes {
+  background: var(--color-bg-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-base);
+  padding: var(--space-12) var(--space-16);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.table-notes p {
+  margin: 0;
+}
+
+.table-notes strong {
+  color: var(--color-text);
+  font-weight: var(--font-weight-semibold);
+}
+
+@media (max-width: 1024px) {
+  .population-stats-table {
+    font-size: var(--font-size-xs);
+  }
+
+  .population-stats-table th,
+  .population-stats-table td {
+    padding: var(--space-8) var(--space-4);
+  }
+}
+
+@media (max-width: 768px) {
+  .population-stats-table-container {
+    padding: var(--space-16);
+  }
+
+  .population-stats-table {
+    font-size: var(--font-size-xs);
+  }
+
+  .population-stats-table th {
+    padding: var(--space-8) var(--space-4);
+    font-size: var(--font-size-xs);
+  }
+
+  .population-stats-table td {
+    padding: var(--space-8) var(--space-4);
+  }
+
+  .table-wrapper {
+    margin: -16px -16px var(--space-16) -16px;
+    border-radius: 0;
+  }
+}
