@@ -10,7 +10,7 @@
 .population-stats-table-container .section-heading {
   font-size: 1.75rem;
   font-weight: var(--font-weight-semibold);
-  color: #000000;
+  color: #000000 !important;
   margin: 0 0 var(--space-16) 0;
   padding-bottom: var(--space-12);
   border-bottom: 2px solid var(--color-border);
@@ -18,7 +18,7 @@
 
 .table-description {
   font-size: var(--font-size-sm);
-  color: #000000;
+  color: #000000 !important;
   margin-bottom: var(--space-20);
   line-height: 1.6;
 }
@@ -45,7 +45,7 @@
   padding: var(--space-12) var(--space-8);
   text-align: left;
   font-weight: var(--font-weight-semibold);
-  color: #000000;
+  color: #000000 !important;
   white-space: nowrap;
   font-size: var(--font-size-xs);
   text-transform: uppercase;
@@ -63,24 +63,30 @@
 
 /* Highlighted row for selected year */
 .population-stats-table tbody tr.highlighted {
-  background: #fff3cd;
+  background: #fff3cd !important;
   border-top: 2px solid #ffc107;
   border-bottom: 2px solid #ffc107;
   font-weight: var(--font-weight-semibold);
 }
 
 .population-stats-table tbody tr.highlighted:hover {
-  background: #ffe69c;
+  background: #ffe69c !important;
 }
 
-/* All text is black by default */
+/* Force all table cells to be black */
 .population-stats-table tbody tr td {
+  color: #000000 !important;
+  padding: var(--space-12) var(--space-8);
+  text-align: right;
+}
+
+/* Override any historical/projected styling */
+.population-stats-table tbody tr.historical td {
   color: #000000 !important;
 }
 
-.population-stats-table td {
-  padding: var(--space-12) var(--space-8);
-  text-align: right;
+.population-stats-table tbody tr.projected td {
+  color: #000000 !important;
 }
 
 .population-stats-table .year-cell {
@@ -116,35 +122,28 @@
 
 .population-stats-table .growth-cell {
   font-weight: var(--font-weight-medium);
-  color: #000000 !important;
 }
 
-/* Only percentage growth gets color */
+/* Only growth cells can have color for positive/negative */
 .population-stats-table .growth-cell.positive {
   color: #2e7d32 !important;
+  font-weight: var(--font-weight-bold);
 }
 
 .population-stats-table .growth-cell.negative {
   color: #c62828 !important;
+  font-weight: var(--font-weight-bold);
 }
 
-/* Migration stays black */
+/* All other cells stay black */
 .population-stats-table .migration-cell {
   font-weight: var(--font-weight-medium);
   color: #000000 !important;
 }
 
-/* Natural increase stays black */
+/* Natural increase */
 .population-stats-table tbody tr td:nth-child(7) {
   font-weight: var(--font-weight-medium);
-  color: #000000 !important;
-}
-
-.population-stats-table tbody tr td:nth-child(7).positive {
-  color: #000000 !important;
-}
-
-.population-stats-table tbody tr td:nth-child(7).negative {
   color: #000000 !important;
 }
 
@@ -164,7 +163,7 @@
     padding: var(--space-16);
   }
 
-  .population-stats-table {;
+  .population-stats-table {
     font-size: var(--font-size-xs);
   }
 
