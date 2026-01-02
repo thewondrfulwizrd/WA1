@@ -118,51 +118,18 @@ input[type="range"].slider {
   width: 100%;
   height: 8px;
   border-radius: 4px;
-  background: #ddd;
+  background: linear-gradient(
+    to right,
+    #ef5350 0%,
+    #ef5350 50%,
+    #26a69a 50%,
+    #26a69a 100%
+  );
   outline: none;
   -webkit-appearance: none;
   appearance: none;
   margin: var(--space-12) 0;
   position: relative;
-}
-
-/* Visual gradient overlay - centered */
-input[type="range"].slider::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(
-    to right,
-    #ef5350 0%,
-    #ef5350 33.33%,
-    #ddd 33.33%,
-    #ddd 66.67%,
-    #26a69a 66.67%,
-  #26a69a 100%
-  );
-  border-radius: 4px;
-  pointer-events: none;
-}
-
-/* Disabled slider */
-input[type="range"].slider:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-input[type="range"].slider:disabled::before {
-  background: linear-gradient(
-    to right,
-    #bbb 0%,
-    #bbb 33.33%,
-    #ddd 33.33%,
-    #ddd 66.67%,
-    #bbb 66.67%,
-    #bbb 100%
-  );
 }
 
 /* Webkit browsers (Chrome, Safari, Edge) */
@@ -181,20 +148,9 @@ input[type="range"].slider::-webkit-slider-thumb {
   z-index: 2;
 }
 
-input[type="range"].slider:disabled::-webkit-slider-thumb {
-  cursor: not-allowed;
-  border-color: #999;
-  background: #ddd;
-}
-
 input[type="range"].slider::-webkit-slider-thumb:hover {
   transform: scale(1.15);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-}
-
-input[type="range"].slider:disabled::-webkit-slider-thumb:hover {
-  transform: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
 input[type="range"].slider::-webkit-slider-thumb:active {
@@ -216,20 +172,9 @@ input[type="range"].slider::-moz-range-thumb {
   z-index: 2;
 }
 
-input[type="range"].slider:disabled::-moz-range-thumb {
-  cursor: not-allowed;
-  border-color: #999;
-  background: #ddd;
-}
-
 input[type="range"].slider::-moz-range-thumb:hover {
   transform: scale(1.15);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
-}
-
-input[type="range"].slider:disabled::-moz-range-thumb:hover {
-  transform: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 }
 
 input[type="range"].slider::-moz-range-thumb:active {
