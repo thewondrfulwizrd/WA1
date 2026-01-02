@@ -84,8 +84,6 @@ export function PopulationTrendChart({ data, scenarios, selectedYear }) {
 
   return (
     <div className="population-trend-chart">
-      <h3>📈 Population Trend (2000-2100)</h3>
-      
       <div className="chart-container">
         <svg width="100%" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMidYMid meet">
           <defs>
