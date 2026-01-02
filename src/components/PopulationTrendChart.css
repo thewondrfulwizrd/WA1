@@ -9,110 +9,155 @@
 .population-trend-chart h3 {
   margin: 0 0 var(--space-16) 0;
   font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
 }
 
 .chart-container {
   width: 100%;
-  background: var(--color-bg-1);
+  background: linear-gradient(to bottom, #fafafa 0%, #ffffff 100%);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-base);
   padding: var(--space-16);
   margin-bottom: var(--space-16);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .chart-container svg {
   overflow: visible;
+  width: 100%;
+  height: auto;
 }
 
 /* Grid lines */
 .grid-line {
-  stroke: var(--color-border);
-  stroke-width: 0.5;
-  stroke-dasharray: 2,2;
+  stroke: #e0e0e0;
+  stroke-width: 1;
+  stroke-dasharray: 4,4;
+  opacity: 0.6;
 }
 
 /* Divider between observed and projected */
 .divider-line {
-  stroke: var(--color-text-secondary);
-  stroke-width: 1;
-  stroke-dasharray: 3,3;
-  opacity: 0.5;
+  stroke: #9c27b0;
+  stroke-width: 2;
+  stroke-dasharray: 6,4;
+  opacity: 0.4;
+}
+
+.divider-label {
+  fill: #9c27b0;
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+/* Area fill under the line */
+.area-fill {
+  opacity: 1;
 }
 
 /* Trend line */
 .trend-line {
-  stroke: var(--color-primary);
-  stroke-width: 2.5;
   stroke-linecap: round;
   stroke-linejoin: round;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-}
-
-/* Data points */
-.data-point {
-  fill: var(--color-primary);
-  opacity: 0.3;
-  transition: all var(--duration-fast) var(--ease-standard);
-}
-
-.data-point.active {
-  fill: var(--color-primary);
-  r: 3;
-  opacity: 1;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 /* Current year indicator */
 .current-year-line {
-  stroke: var(--color-primary);
-  stroke-width: 1.5;
-  opacity: 0.4;
-  stroke-dasharray: 2,4;
+  stroke: #1976d2;
+  stroke-width: 2;
+  stroke-dasharray: 3,3;
+  opacity: 0.5;
+}
+
+.current-year-point {
+  fill: #1976d2;
+  stroke: white;
+  stroke-width: 2;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+/* Axes */
+.axis-line {
+  stroke: #666;
+  stroke-width: 2;
+}
+
+.axis-label {
+  fill: #666;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.axis-title {
+  fill: #424242;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Chart footer */
+.chart-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-16);
+  flex-wrap: wrap;
 }
 
 /* Legend */
 .chart-legend {
   display: flex;
   gap: var(--space-16);
-  margin-bottom: var(--space-16);
   flex-wrap: wrap;
 }
 
 .legend-item {
   display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
+  align-items: center;
+  gap: var(--space-8);
 }
 
-.legend-label {
+.legend-color {
+  width: 24px;
+  height: 4px;
+  border-radius: 2px;
+}
+
+.legend-color.historical {
+  background: linear-gradient(to right, #1976d2, #1976d2);
+}
+
+.legend-color.projected {
+  background: linear-gradient(to right, #7b1fa2, #7b1fa2);
+}
+
+.legend-color.current {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #1976d2;
+  border: 2px solid white;
+  box-shadow: 0 0 0 1px #1976d2;
+}
+
+.legend-text {
   font-size: var(--font-size-xs);
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  font-weight: var(--font-weight-semibold);
-}
-
-.legend-value {
-  font-size: var(--font-size-sm);
   color: var(--color-text);
   font-weight: var(--font-weight-medium);
 }
 
 /* Chart stats */
 .chart-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: var(--space-12);
+  display: flex;
+  gap: var(--space-16);
 }
 
 .stat-item {
   display: flex;
   flex-direction: column;
   gap: var(--space-4);
-  padding: var(--space-12);
-  background: var(--color-secondary);
-  border-radius: var(--radius-base);
-  border-left: 3px solid var(--color-primary);
 }
 
 .stat-label {
@@ -120,6 +165,7 @@
   color: var(--color-text-secondary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  font-weight: var(--font-weight-semibold);
 }
 
 .stat-value {
@@ -137,12 +183,27 @@
     padding: var(--space-12);
   }
 
+  .chart-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-12);
+  }
+
   .chart-legend {
     flex-direction: column;
     gap: var(--space-8);
   }
 
   .chart-stats {
-    grid-template-columns: 1fr;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .axis-label {
+    font-size: 10px;
+  }
+
+  .axis-title {
+    font-size: 11px;
   }
 }
