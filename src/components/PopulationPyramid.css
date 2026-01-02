@@ -2,24 +2,38 @@
   max-width: 1600px;
   width: 95%;
   margin: 0 auto;
-  padding: 0px 15px 15px;
+  padding: var(--space-24) 15px 15px;
 }
 
 .population-pyramid h1 {
-  margin: 20px 0 12px 0;
+  margin: 20px 0 24px 0;
   font-size: 2.2em;
   font-weight: 600;
   color: var(--color-text);
+  text-align: center;
 }
 
-.population-pyramid h2 {
-  margin-top: -20px;        /* ← Removes default browser margin */
-  margin-bottom: 12px;
-  font-size: 2em;
+.section-divider {
+  height: 2px;
+  background: linear-gradient(to right, transparent, var(--color-border), transparent);
+  margin: var(--space-32) 0;
+}
+
+.section-heading {
+  font-size: 1.75rem;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text);
+  margin: 0 0 var(--space-20) 0;
+  padding-bottom: var(--space-12);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.pyramid-section {
+  margin: var(--space-24) 0;
 }
 
 .controls {
-  margin: 12px 0;
+  margin: var(--space-24) 0;
   text-align: center;
 }
 
@@ -97,7 +111,7 @@
 }
 
 .timeline-indicator {
-  margin: 12px auto;
+  margin: var(--space-20) auto;
   max-width: 1400px;
 }
 
@@ -132,7 +146,7 @@
 .summary {
   display: flex;
   justify-content: space-around;
-  margin: 12px auto;
+  margin: var(--space-20) auto;
   padding: 15px;
   background: #f5f5f5;
   border-radius: 8px;
