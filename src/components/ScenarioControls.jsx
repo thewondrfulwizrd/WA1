@@ -15,7 +15,7 @@ export function ScenarioControls({ scenarios, onScenarioChange, onReset, isHisto
     <div className="scenario-controls">
       <div className="scenario-header">
         <h3>📊 Scenario Builder</h3>
-        <button className="reset-button" onClick={onReset} disabled={isHistorical}>
+        <button className="reset-button" onClick={onReset}>
           Reset to Baseline
         </button>
       </div>
@@ -42,18 +42,17 @@ export function ScenarioControls({ scenarios, onScenarioChange, onReset, isHisto
           <input
             type="range"
             min="-50"
-            max="100"
+            max="50"
             value={scenarios.fertility}
             step="5"
             onChange={(e) => onScenarioChange('fertility', parseInt(e.target.value))}
             className="slider"
-            disabled={isHistorical}
           />
           
           <div className="scenario-markers">
             <span>-50%</span>
             <span className="baseline-marker">0%</span>
-            <span>+100%</span>
+            <span>+50%</span>
           </div>
           
           <div className="baseline-display">
@@ -88,7 +87,6 @@ export function ScenarioControls({ scenarios, onScenarioChange, onReset, isHisto
             step="5"
             onChange={(e) => onScenarioChange('mortality', parseInt(e.target.value))}
             className="slider"
-            disabled={isHistorical}
           />
           
           <div className="scenario-markers">
@@ -124,18 +122,17 @@ export function ScenarioControls({ scenarios, onScenarioChange, onReset, isHisto
           <input
             type="range"
             min="-75"
-            max="150"
+            max="75"
             value={scenarios.migration}
             step="5"
             onChange={(e) => onScenarioChange('migration', parseInt(e.target.value))}
             className="slider"
-            disabled={isHistorical}
           />
           
           <div className="scenario-markers">
             <span>-75%</span>
             <span className="baseline-marker">0%</span>
-            <span>+150%</span>
+            <span>+75%</span>
           </div>
           
           <div className="baseline-display">
