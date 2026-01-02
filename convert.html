@@ -32,6 +32,18 @@
         URL.revokeObjectURL(url);
       }
 
+      // Normalize strings coming from CSV cells:
+      // - convert null/undefined to ""
+      // - replace NBSP with regular space
+      // - trim
+      // - collapse repeated whitespace
+      function norm(v) {
+        return String(v ?? "")
+          .replace(/\u00A0/g, " ")
+          .trim()
+          .replace(/\s+/g, " ");
+      }
+
       const START_YEAR = 2000;
       const LAST_OBSERVED_YEAR = 2025;
 
@@ -52,8 +64,7 @@
           header: true,
           skipEmptyLines: true,
 
-          // IMPORTANT: strip UTF-8 BOM if present on the first header cell
-          // Your CSV header starts with ﻿"REF_DATE" (BOM before REF_DATE).
+          // Strip UTF-8 BOM if present on the first header cell (your CSV starts with ﻿"REF_DATE"). 
           transformHeader: (h) => (h || "").replace(/^\uFEFF/, "").trim()
         });
 
@@ -65,62 +76,82 @@
         const rows = parsed.data || [];
         log(`Total parsed rows: ${rows.length.toLocaleString()}`);
 
-        // These match the column names in your CSV (after transformHeader).
+        // Column names (after transformHeader)
         const YEAR_COL = "REF_DATE";
         const GEO_COL = "GEO";
         const GENDER_COL = "Gender";
         const AGE_COL = "Age group";
         const VAL_COL = "VALUE";
 
-        // Helpful debug: show detected headers from the first row
+        // Debug: detected columns
         const firstRow = rows[0] || {};
         log("Detected columns (from first row):");
         log(Object.keys(firstRow).join(", ") || "(none)");
 
-        // Filter to Canada, 2000–2025, Men/Women, and real age groups (exclude "All ages")
+        // Debug: show distinct Gender/Age group values (first 50 of each)
+        const genders = Array.from(new Set(rows.map(r => norm(r[GENDER_COL])))).filter(Boolean).sort();
+        const agesAll = Array.from(new Set(rows.map(r => norm(r[AGE_COL])))).filter(Boolean).sort();
+
+        log(`Distinct Gender values (${genders.length}): ${genders.slice(0, 50).join(" | ")}${genders.length > 50 ? " | ..." : ""}`);
+        log(`Distinct Age group values (${agesAll.length}): ${agesAll.slice(0, 50).join(" | ")}${agesAll.length > 50 ? " | ..." : ""}`);
+
+        // Accept a few possible labels just in case
+        const MALE_LABELS = new Set(["Men", "Males", "Male"]);
+        const FEMALE_LABELS = new Set(["Women", "Females", "Female"]);
+
+        // Filter rows we need for pyramid: Canada, 2000–2025, Men/Women, and exclude "All ages"
         const slice = rows.filter(r => {
-          const year = Number(r[YEAR_COL]);
+          const year = Number(norm(r[YEAR_COL]));
+          const geo = norm(r[GEO_COL]);
+          const gender = norm(r[GENDER_COL]);
+          const age = norm(r[AGE_COL]);
+          const valueRaw = norm(r[VAL_COL]);
+
           return (
-            r[GEO_COL] === "Canada" &&
+            geo === "Canada" &&
             Number.isFinite(year) &&
             year >= START_YEAR &&
             year <= LAST_OBSERVED_YEAR &&
-            (r[GENDER_COL] === "Men+" || r[GENDER_COL] === "Women+") &&
-            r[AGE_COL] !== "All ages" &&
-            r[VAL_COL] !== "" &&
-            r[VAL_COL] != null
+            (MALE_LABELS.has(gender) || FEMALE_LABELS.has(gender)) &&
+            age !== "All ages" &&
+            valueRaw !== ""
           );
         });
 
         log(`Rows after filter: ${slice.length.toLocaleString()}`);
 
-        // If still zero, show a sample of the key fields to diagnose quickly
+        // If still zero, show a couple of "Men"/"Women" candidates so we can see why
         if (slice.length === 0) {
-          const sample = rows.slice(0, 3).map(r => ({
-            REF_DATE: r[YEAR_COL],
-            GEO: r[GEO_COL],
-            Gender: r[GENDER_COL],
-            "Age group": r[AGE_COL],
-            VALUE: r[VAL_COL],
-          }));
-          log("Sample of first 3 rows (mapped fields):");
-          log(JSON.stringify(sample, null, 2));
+          const candidates = rows
+            .filter(r => ["Men","Women","Males","Females"].includes(norm(r[GENDER_COL])))
+            .slice(0, 5)
+            .map(r => ({
+              REF_DATE: norm(r[YEAR_COL]),
+              GEO: norm(r[GEO_COL]),
+              Gender: norm(r[GENDER_COL]),
+              "Age group": norm(r[AGE_COL]),
+              VALUE: norm(r[VAL_COL])
+            }));
+
+          log("Sample rows where Gender looks like Men/Women (first 5):");
+          log(JSON.stringify(candidates, null, 2));
+
           throw new Error("Filter produced 0 rows. See debug output above.");
         }
 
-        // Collect age groups in a stable order (first-seen order in the filtered data)
+        // Collect age groups in first-seen order within the filtered slice
         const ages = [];
-        const agesSeen = new Set();
+        const ageToIndex = new Map();
         for (const r of slice) {
-          const a = r[AGE_COL];
-          if (!agesSeen.has(a)) {
-            agesSeen.add(a);
+          const a = norm(r[AGE_COL]);
+          if (!ageToIndex.has(a)) {
+            ageToIndex.set(a, ages.length);
             ages.push(a);
           }
         }
-        log(`Age groups found: ${ages.length}`);
+        log(`Age groups found (in output order): ${ages.length}`);
 
-        // Build observed[year] = { male: [...], female: [...] } aligned to ages[]
+        // Initialize observed structure
         const observed = {};
         for (let y = START_YEAR; y <= LAST_OBSERVED_YEAR; y++) {
           observed[String(y)] = {
@@ -129,20 +160,21 @@
           };
         }
 
+        // Fill values
         for (const r of slice) {
-          const year = String(Number(r[YEAR_COL]));
-          const age = r[AGE_COL];
-          const gender = r[GENDER_COL];
-          const value = Number(r[VAL_COL]);
-          const idx = ages.indexOf(age);
+          const year = String(Number(norm(r[YEAR_COL])));
+          const age = norm(r[AGE_COL]);
+          const gender = norm(r[GENDER_COL]);
+          const value = Number(norm(r[VAL_COL]));
+          const idx = ageToIndex.get(age);
 
-          if (idx === -1 || !Number.isFinite(value)) continue;
+          if (idx == null || !Number.isFinite(value)) continue;
 
-          if (gender === "Men+") observed[year].male[idx] = value;
-          if (gender === "Women+") observed[year].female[idx] = value;
+          if (MALE_LABELS.has(gender)) observed[year].male[idx] = value;
+          if (FEMALE_LABELS.has(gender)) observed[year].female[idx] = value;
         }
 
-        // Sanity check: count missing cells
+        // Sanity check: missing cells
         let missing = 0;
         for (let y = START_YEAR; y <= LAST_OBSERVED_YEAR; y++) {
           const yr = String(y);
