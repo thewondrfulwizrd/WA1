@@ -54,6 +54,13 @@ export function PopulationPyramid() {
     });
   };
 
+  // Generate year markers for every 10 years
+  const yearMarkers = [];
+  for (let year = 2000; year <= 2100; year += 10) {
+    const position = ((year - data.yearsObserved[0]) / (data.lastProjectedYear - data.yearsObserved[0])) * 100;
+    yearMarkers.push({ year, position });
+  }
+
   return (
     <div className="population-pyramid">
       <h1>Canada Population Growth Model, 2025-2100</h1>
@@ -73,11 +80,26 @@ export function PopulationPyramid() {
           value={selectedYear}
           step={1}
           onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+          list="year-markers"
         />
+        <datalist id="year-markers">
+          {yearMarkers.map(marker => (
+            <option key={marker.year} value={marker.year}></option>
+          ))}
+        </datalist>
         <div className="year-labels">
-          <span>{data.yearsObserved[0]}</span>
-          <span style={{ position: 'absolute', left: '25%' }}>{data.lastObservedYear}</span>
-          <span>{data.lastProjectedYear}</span>
+          {yearMarkers.map(marker => (
+            <span 
+              key={marker.year} 
+              style={{ 
+                position: 'absolute', 
+                left: `${marker.position}%`,
+                transform: 'translateX(-50%)'
+              }}
+            >
+              {marker.year}
+            </span>
+          ))}
         </div>
       </div>
 
