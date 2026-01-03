@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { applyScenarios } from '../utils/scenarioCalculations';
 import { getMortalityRates, loadMortalityRates } from '../utils/mortalityRates';
 import { getMigrationDistribution, loadMigrationDistribution } from '../utils/migrationDistribution';
+import { getAdjustedFertilityRates, calculateBirthsFromASFR } from '../utils/fertilityRates';
 import { loadHistoricalMigration, loadHistoricalBirths, loadHistoricalDeaths } from '../utils/historicalDataLoader';
 import './DebugTable.css';
 
@@ -43,6 +44,10 @@ export function DebugTable({ data, scenarios, visible }) {
         const baseNetMigration = 400000;
         const adjustedNetMigration = Math.round(baseNetMigration * migrationMultiplier);
 
+        // Get adjusted fertility rates
+        const fertilityRates = getAdjustedFertilityRates(scenarios.fertility);
+        const adjustedASFRs = fertilityRates.asfrs;
+
         const years = [2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035];
         const breakdown = [];
         const populationByYear = {}; // Store populations for calculating annual change
@@ -64,6 +69,15 @@ export function DebugTable({ data, scenarios, visible }) {
           const femaleTotal = population.female.reduce((sum, val) => sum + val, 0);
           const total = maleTotal + femaleTotal;
           populationByYear[year].total = total;
+
+          // Calculate births for this year
+          let totalBirths = 0;
+          if (isHistorical) {
+            totalBirths = historicalBirths[year] || 0;
+          } else {
+            // Calculate births using ASFR
+            totalBirths = calculateBirthsFromASFR(population.female, adjustedASFRs);
+          }
 
           // Calculate deaths and net migration
           let totalDeaths = 0;
@@ -100,6 +114,8 @@ export function DebugTable({ data, scenarios, visible }) {
             year,
             age: 'All ages',
             population: total,
+            asfr: null, // Not applicable for "All ages"
+            births: totalBirths,
             mortalityRate: globalMortalityRate,
             deaths: totalDeaths,
             netMigration: totalNetMigration,
@@ -115,6 +131,12 @@ export function DebugTable({ data, scenarios, visible }) {
 
             // Store cohort population
             populationByYear[year].cohorts[i] = cohortPop;
+
+            // Get ASFR for this cohort
+            const cohortASFR = adjustedASFRs[i];
+
+            // Calculate births from this cohort (only for reproductive ages)
+            const cohortBirths = cohortASFR > 0 ? Math.round(femalePop * cohortASFR) : 0;
 
             // Calculate mortality rate and deaths for this cohort
             let cohortDeaths = 0;
@@ -163,6 +185,8 @@ export function DebugTable({ data, scenarios, visible }) {
               year,
               age: ageGroup,
               population: cohortPop,
+              asfr: cohortASFR,
+              births: cohortBirths,
               mortalityRate: avgMortalityRate,
               deaths: cohortDeaths,
               netMigration: cohortMigration,
@@ -202,6 +226,8 @@ export function DebugTable({ data, scenarios, visible }) {
               <th>Year</th>
               <th>Age</th>
               <th>Population</th>
+              <th>ASFR</th>
+              <th>Births</th>
               <th>Mortality Rate</th>
               <th>Deaths</th>
               <th>Net Migration</th>
@@ -209,33 +235,49 @@ export function DebugTable({ data, scenarios, visible }) {
             </tr>
           </thead>
           <tbody>
-            {debugData.map((row, index) => (
-              <tr key={index} className={`${row.age === 'All ages' ? 'total-row' : ''} ${row.isHistorical ? 'historical' : 'projected'}`}>
-                <td>{row.year}</td>
-                <td>{row.age}</td>
-                <td className="number-cell">{row.population.toLocaleString()}</td>
-                <td className="number-cell">{row.mortalityRate.toFixed(row.age === 'All ages' ? 5 : 3)}</td>
-                <td className="number-cell">{row.deaths.toLocaleString()}</td>
-                <td className="number-cell">{row.netMigration.toLocaleString()}</td>
-                <td className="number-cell change-cell">
-                  {row.annualChange === null ? '—' : (
-                    <span className={row.annualChange >= 0 ? 'positive-change' : 'negative-change'}>
-                      {row.annualChange >= 0 ? '+' : ''}{row.annualChange.toLocaleString()}
-                    </span>
+            {debugData.map((row, index) => {
+              // Check if this is the last row of 2025 to add demarcation
+              const isLastRowOf2025 = row.year === 2025 && row.age === '100 years and older';
+              
+              return (
+                <React.Fragment key={index}>
+                  <tr className={`${row.age === 'All ages' ? 'total-row' : ''} ${row.isHistorical ? 'historical' : 'projected'}`}>
+                    <td>{row.year}</td>
+                    <td>{row.age}</td>
+                    <td className="number-cell">{row.population.toLocaleString()}</td>
+                    <td className="number-cell">
+                      {row.asfr === null ? '—' : row.asfr === 0 ? '0' : row.asfr.toFixed(5)}
+                    </td>
+                    <td className="number-cell">
+                      {row.age === 'All ages' 
+                        ? row.births.toLocaleString() 
+                        : row.births > 0 ? row.births.toLocaleString() : '—'
+                      }
+                    </td>
+                    <td className="number-cell">{row.mortalityRate.toFixed(row.age === 'All ages' ? 5 : 3)}</td>
+                    <td className="number-cell">{row.deaths.toLocaleString()}</td>
+                    <td className="number-cell">{row.netMigration.toLocaleString()}</td>
+                    <td className="number-cell change-cell">
+                      {row.annualChange === null ? '—' : (
+                        <span className={row.annualChange >= 0 ? 'positive-change' : 'negative-change'}>
+                          {row.annualChange >= 0 ? '+' : ''}{row.annualChange.toLocaleString()}
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                  {/* Add demarcation line between 2025 and 2026 */}
+                  {isLastRowOf2025 && (
+                    <tr className="demarcation-row">
+                      <td colSpan="9">
+                        <div className="demarcation-line">
+                          <span className="demarcation-label">Historical Data Ends / Projections Begin</span>
+                        </div>
+                      </td>
+                    </tr>
                   )}
-                </td>
-              </tr>
-            ))}
-            {/* Add demarcation line between 2025 and 2026 */}
-            {debugData.find(row => row.year === 2025 && row.age === '100 years and older') && (
-              <tr className="demarcation-row">
-                <td colSpan="7">
-                  <div className="demarcation-line">
-                    <span className="demarcation-label">Historical Data Ends / Projections Begin</span>
-                  </div>
-                </td>
-              </tr>
-            )}
+                </React.Fragment>
+              );
+            })}
           </tbody>
         </table>
       </div>
