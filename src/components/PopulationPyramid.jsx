@@ -76,20 +76,22 @@ export function PopulationPyramid() {
             {yearType === 'observed' ? '📈 Historical' : '🔮 Projected'}
           </span>
         </label>
-        <input
-          type="range"
-          min={data.yearsObserved[0]}
-          max={data.lastProjectedYear}
-          value={selectedYear}
-          step={1}
-          onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-          list="year-markers"
-        />
-        <datalist id="year-markers">
-          {yearMarkers.map(marker => (
-            <option key={marker.year} value={marker.year}></option>
-          ))}
-        </datalist>
+        <div className="slider-container">
+          <input
+            type="range"
+            min={data.yearsObserved[0]}
+            max={data.lastProjectedYear}
+            value={selectedYear}
+            step={1}
+            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+            list="year-markers"
+          />
+          <datalist id="year-markers">
+            {yearMarkers.map(marker => (
+              <option key={marker.year} value={marker.year}></option>
+            ))}
+          </datalist>
+        </div>
         <div className="year-labels">
           {yearMarkers.map(marker => (
             <span 
