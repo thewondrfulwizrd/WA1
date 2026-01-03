@@ -46,27 +46,50 @@ export async function projectOneYear(currentPopulation, scenarios, data) {
   const adjustedNetMigration = Math.round(BASELINE_NET_MIGRATION * migrationMultiplier);
 
   // FEMALES: Age forward and apply mortality
+  // Process from youngest to oldest to avoid overwriting
   const projectedFemale = new Array(21).fill(0);
 
-  for (let i = 20; i > 0; i--) {
-    const baseMortalityRatePer1000 = baseFemaleRates[i - 1];
+  // First, handle the oldest cohort (100+, index 20)
+  // Apply mortality to current pop[20] and it dies out
+  const baseFemaleRateOldest = baseFemaleRates[20];
+  const adjustedFemaleRateOldest = baseFemaleRateOldest * mortalityMultiplier;
+  const femaleDeathPropOldest = adjustedFemaleRateOldest / 1000;
+  const femaleSurvivalRateOldest = Math.max(0, Math.min(1, 1 - femaleDeathPropOldest));
+  // The oldest cohort ages out and dies - no one moves to index 21
+  // projectedFemale[20] = 0 (they all age out of the population)
+  projectedFemale[20] = 0;
+
+  // Now age all younger cohorts forward
+  for (let i = 19; i >= 0; i--) {
+    const baseMortalityRatePer1000 = baseFemaleRates[i];
     const adjustedMortalityRatePer1000 = baseMortalityRatePer1000 * mortalityMultiplier;
     const mortalityProportion = adjustedMortalityRatePer1000 / 1000;
     const survivalRate = Math.max(0, Math.min(1, 1 - mortalityProportion));
 
-    projectedFemale[i] = Math.round(currentPopulation.female[i - 1] * survivalRate);
+    // Age cohort forward: pop[i] -> pop[i+1]
+    projectedFemale[i + 1] = Math.round(currentPopulation.female[i] * survivalRate);
   }
 
   // MALES: Age forward and apply mortality
   const projectedMale = new Array(21).fill(0);
 
-  for (let i = 20; i > 0; i--) {
-    const baseMortalityRatePer1000 = baseMaleRates[i - 1];
+  // First, handle the oldest cohort (100+, index 20)
+  const baseMaleRateOldest = baseMaleRates[20];
+  const adjustedMaleRateOldest = baseMaleRateOldest * mortalityMultiplier;
+  const maleDeathPropOldest = adjustedMaleRateOldest / 1000;
+  const maleSurvivalRateOldest = Math.max(0, Math.min(1, 1 - maleDeathPropOldest));
+  // The oldest cohort ages out and dies
+  projectedMale[20] = 0;
+
+  // Age all younger cohorts forward
+  for (let i = 19; i >= 0; i--) {
+    const baseMortalityRatePer1000 = baseMaleRates[i];
     const adjustedMortalityRatePer1000 = baseMortalityRatePer1000 * mortalityMultiplier;
     const mortalityProportion = adjustedMortalityRatePer1000 / 1000;
     const survivalRate = Math.max(0, Math.min(1, 1 - mortalityProportion));
 
-    projectedMale[i] = Math.round(currentPopulation.male[i - 1] * survivalRate);
+    // Age cohort forward: pop[i] -> pop[i+1]
+    projectedMale[i + 1] = Math.round(currentPopulation.male[i] * survivalRate);
   }
 
   // BIRTHS (ages 0-4 cohort)
@@ -77,8 +100,7 @@ export async function projectOneYear(currentPopulation, scenarios, data) {
     reproductiveAgeFemales += currentPopulation.female[i];
   }
 
-  // Births = reproductive-age females × (TFR / 2) × (1 / 5-year period)
-  // Simplify: Births = reproductive-age females × (TFR / 10)
+  // Births = reproductive-age females × (TFR / 10)
   // This gives approximately correct births per year assuming steady-state age distribution
   const births = Math.round(reproductiveAgeFemales * (adjustedTFR / 10));
 
