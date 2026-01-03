@@ -120,6 +120,11 @@
   color: #000000 !important;
 }
 
+/* Bold the Total Population column */
+.population-stats-table .population-cell {
+  font-weight: var(--font-weight-bold) !important;
+}
+
 .population-stats-table .growth-cell {
   font-weight: var(--font-weight-medium);
 }
