@@ -21,13 +21,21 @@ export async function loadHistoricalBirths() {
       
       if (isNaN(value)) return;
       
-      // Extract year from fiscal year format (YYYY/YYYY) - use start year
-      // Births uses fiscal years: 2024/2025 is stored as year 2024
-      const year = parseInt(refDate.split('/')[0]);
-      
-      // Only count "Total - gender" to avoid double-counting
-      if (genderField === 'Total - gender') {
-        birthsByYear[year] = value;
+      // Extract year from fiscal year format (YYYY/YYYY)
+      // For fiscal years, store data for BOTH calendar years
+      if (refDate.includes('/')) {
+        const [startYear, endYear] = refDate.split('/').map(y => parseInt(y));
+        
+        // Only count "Total - gender" to avoid double-counting
+        if (genderField === 'Total - gender') {
+          birthsByYear[startYear] = value;
+          birthsByYear[endYear] = value; // Also store for end year
+        }
+      } else {
+        const year = parseInt(refDate);
+        if (genderField === 'Total - gender') {
+          birthsByYear[year] = value;
+        }
       }
     });
     
@@ -126,23 +134,31 @@ export async function loadHistoricalMigration() {
       const valueStr = matches[12].replace(/"/g, '').trim(); // Migration VALUE is at index 12
       const value = parseInt(valueStr, 10) || 0;
       
-      // Migration uses fiscal years (YYYY/YYYY) - extract start year
-      const year = parseInt(refDate.split('/')[0]);
-      
       // Only count "Total - gender" and "All ages" to get totals
       if (genderField !== 'Total - gender' || ageGroup !== 'All ages') return;
       
-      if (!immigrationByYear[year]) immigrationByYear[year] = 0;
-      if (!nonPermByYear[year]) nonPermByYear[year] = 0;
-      if (!emigrationByYear[year]) emigrationByYear[year] = 0;
-      
-      if (migrationType === 'Immigrants') {
-        immigrationByYear[year] += value;
-      } else if (migrationType === 'Net non-permanent residents') {
-        nonPermByYear[year] += value;
-      } else if (migrationType === 'Net emigration') {
-        emigrationByYear[year] += value;
+      // Extract years from fiscal year format (YYYY/YYYY)
+      let years = [];
+      if (refDate.includes('/')) {
+        const [startYear, endYear] = refDate.split('/').map(y => parseInt(y));
+        years = [startYear, endYear]; // Store for BOTH years
+      } else {
+        years = [parseInt(refDate)];
       }
+      
+      years.forEach(year => {
+        if (!immigrationByYear[year]) immigrationByYear[year] = 0;
+        if (!nonPermByYear[year]) nonPermByYear[year] = 0;
+        if (!emigrationByYear[year]) emigrationByYear[year] = 0;
+        
+        if (migrationType === 'Immigrants') {
+          immigrationByYear[year] += value;
+        } else if (migrationType === 'Net non-permanent residents') {
+          nonPermByYear[year] += value;
+        } else if (migrationType === 'Net emigration') {
+          emigrationByYear[year] += value;
+        }
+      });
     });
     
     // Calculate net migration: Immigrants + Net non-permanent residents - Net emigration
