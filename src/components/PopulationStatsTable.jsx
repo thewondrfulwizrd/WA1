@@ -88,7 +88,7 @@ export function PopulationStatsTable({ data, scenarios, selectedYear }) {
                   <span className="year-value">{row.year}</span>
                   {row.year === selectedYear && <span className="current-badge">◄ Current</span>}
                 </td>
-                <td className="number-cell">
+                <td className="number-cell population-cell">
                   {(row.population / 1000000).toFixed(2)}M
                 </td>
                 <td className={`number-cell growth-cell ${row.nominalGrowth >= 0 ? 'positive' : 'negative'}`}>
