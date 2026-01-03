@@ -71,6 +71,18 @@
   font-family: 'Courier New', monospace;
 }
 
+.debug-table .change-cell {
+  font-weight: 600;
+}
+
+.debug-table .positive-change {
+  color: #2e7d32;
+}
+
+.debug-table .negative-change {
+  color: #c62828;
+}
+
 .debug-button {
   display: block;
   margin: 40px auto 20px;
