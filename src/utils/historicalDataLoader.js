@@ -16,9 +16,13 @@ export async function loadHistoricalBirths() {
       
       const refDate = matches[0].replace(/"/g, '').trim();
       const genderField = matches[3].replace(/"/g, '').trim();
-      const value = parseInt(matches[10].replace(/"/g, '').trim(), 10);
+      const valueStr = matches[10].replace(/"/g, '').trim();
+      const value = parseInt(valueStr, 10);
       
-      // Extract year - births uses calendar years (YYYY)
+      if (isNaN(value)) return;
+      
+      // Extract year from fiscal year format (YYYY/YYYY) - use start year
+      // Births uses fiscal years: 2024/2025 is stored as year 2024
       const year = parseInt(refDate.split('/')[0]);
       
       // Only count "Total - gender" to avoid double-counting
@@ -48,7 +52,10 @@ export async function loadHistoricalDeaths() {
       // Deaths CSV: REF_DATE (index 0), GEO, DGUID, Age, Sex, UOM, ..., VALUE (index 11)
       const refDate = matches[0].replace(/"/g, '').trim();
       const ageGroup = matches[3].replace(/"/g, '').trim();
-      const value = parseInt(matches[11].replace(/"/g, '').trim(), 10);
+      const valueStr = matches[11].replace(/"/g, '').trim();
+      const value = parseInt(valueStr, 10);
+      
+      if (isNaN(value)) return;
       
       const year = parseInt(refDate);
       
@@ -78,7 +85,10 @@ export async function loadHistoricalMortality() {
       
       const refDate = matches[0].replace(/"/g, '').trim();
       const ageGroup = matches[3].replace(/"/g, '').trim();
-      const value = parseFloat(matches[11].replace(/"/g, '').trim()) || 0;
+      const valueStr = matches[11].replace(/"/g, '').trim();
+      const value = parseFloat(valueStr);
+      
+      if (isNaN(value)) return;
       
       const year = parseInt(refDate);
       
@@ -113,7 +123,8 @@ export async function loadHistoricalMigration() {
       const genderField = matches[3].replace(/"/g, '').trim();
       const migrationType = matches[4].replace(/"/g, '').trim();
       const ageGroup = matches[5].replace(/"/g, '').trim();
-      const value = parseInt(matches[12].replace(/"/g, '').trim(), 10) || 0;
+      const valueStr = matches[12].replace(/"/g, '').trim();
+      const value = parseInt(valueStr, 10) || 0;
       
       // Migration uses fiscal years (YYYY/YYYY) - extract start year
       const year = parseInt(refDate.split('/')[0]);
