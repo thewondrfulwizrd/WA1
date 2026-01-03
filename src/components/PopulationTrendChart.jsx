@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { getPopulationByYear, getTotalPopulation } from '../utils/populationHelpers';
 import { applyScenarios } from '../utils/scenarioCalculations';
 import './PopulationTrendChart.css';
@@ -6,21 +6,41 @@ import './PopulationTrendChart.css';
 export function PopulationTrendChart({ data, scenarios, selectedYear, onYearChange }) {
   const svgRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [chartData, setChartData] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const chartData = useMemo(() => {
-    if (!data) return [];
-
-    const years = [...data.yearsObserved, ...data.yearsProjected];
-    return years.map(year => {
-      const population = applyScenarios(data, scenarios, year);
-      const maleTotal = population.male.reduce((sum, val) => sum + val, 0);
-      const femaleTotal = population.female.reduce((sum, val) => sum + val, 0);
-      const total = maleTotal + femaleTotal;
-      return { year, total };
-    });
+  // Compute chart data when scenarios or data change
+  useEffect(() => {
+    async function computeChartData() {
+      if (!data) return;
+      setLoading(true);
+      try {
+        const years = [...data.yearsObserved, ...data.yearsProjected];
+        const computed = [];
+        
+        for (const year of years) {
+          const population = await applyScenarios(data, scenarios, year);
+          if (population) {
+            const maleTotal = population.male.reduce((sum, val) => sum + val, 0);
+            const femaleTotal = population.female.reduce((sum, val) => sum + val, 0);
+            const total = maleTotal + femaleTotal;
+            computed.push({ year, total });
+          }
+        }
+        
+        setChartData(computed);
+      } catch (error) {
+        console.error('Error computing chart data:', error);
+        setChartData([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    computeChartData();
   }, [data, scenarios]);
 
-  if (!chartData.length) return null;
+  if (!chartData.length || loading) return <div style={{ height: '340px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>Loading chart...</div>;
 
   // Find min and max for scaling
   const minPop = Math.min(...chartData.map(d => d.total));
