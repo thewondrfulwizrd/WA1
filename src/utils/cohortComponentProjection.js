@@ -34,7 +34,7 @@ export async function projectOneYear(currentPopulation, scenarios, data) {
   const baseFemaleRates = mortalityRates.female;
 
   // Constants for demographic model
-  const BASELINE_FERTILITY = 1.5; // Total Fertility Rate
+  const BASELINE_ANNUAL_BIRTHS = 369000; // Actual 2025 births from Statistics Canada
   const BASELINE_NET_MIGRATION = 400000; // Annual net migration
 
   // Scenario adjustments
@@ -70,17 +70,9 @@ export async function projectOneYear(currentPopulation, scenarios, data) {
   }
 
   // BIRTHS (ages 0-4 cohort)
-  // Simplified: use proportion of women age 20-49 as proxy for fertility exposure
-  // Indices 4-10 represent ages 20-49
-  let womensOfReproductiveAge = 0;
-  for (let i = 4; i <= 10; i++) {
-    womensOfReproductiveAge += projectedFemale[i];
-  }
-
-  const adjustedFertility = BASELINE_FERTILITY * fertilityMultiplier;
-  // Births per woman is TFR / 2 (approximately, since TFR is per woman)
-  const birthsPerWoman = adjustedFertility / 2;
-  const births = Math.round(womensOfReproductiveAge * birthsPerWoman);
+  // Use baseline births adjusted by fertility scenario
+  // This is much more accurate than calculating from TFR
+  const births = Math.round(BASELINE_ANNUAL_BIRTHS * fertilityMultiplier);
 
   // Split births 51% female, 49% male (standard demographic assumption)
   projectedMale[0] = Math.round(births * 0.49);
