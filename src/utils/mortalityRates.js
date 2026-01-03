@@ -13,13 +13,24 @@ let cachedMortalityRates = null;
 export async function loadMortalityRates() {
   // Return cached version if already loaded
   if (cachedMortalityRates) {
+    console.log('[MortalityRates] Using cached rates');
     return cachedMortalityRates;
   }
 
+  console.log('[MortalityRates] Loading from CSV...');
+
   try {
     const response = await fetch('/data/source/Base_Mortality.csv');
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
     const csv = await response.text();
+    console.log('[MortalityRates] CSV loaded, length:', csv.length);
+    
     const lines = csv.trim().split('\n').slice(1); // Skip header
+    console.log('[MortalityRates] Number of data lines:', lines.length);
 
     // Map of age group names to indices (based on pyramid age groups)
     const ageGroupIndices = {
@@ -48,10 +59,15 @@ export async function loadMortalityRates() {
 
     const maleRates = new Array(21).fill(0);
     const femaleRates = new Array(21).fill(0);
+    
+    let rowsParsed = 0;
+    let rowsMatched = 0;
 
     lines.forEach(line => {
       const matches = line.match(/"([^"]*)"|[^,]+/g);
       if (!matches || matches.length < 12) return;
+      
+      rowsParsed++;
 
       const refDate = matches[0].replace(/"/g, '').trim();
       const sex = matches[4].replace(/"/g, '').trim();
@@ -66,26 +82,39 @@ export async function loadMortalityRates() {
 
       const ageIndex = ageGroupIndices[ageGroup];
       if (ageIndex !== undefined) {
+        rowsMatched++;
         if (sex === 'Males') {
           maleRates[ageIndex] = value;
+          console.log(`[MortalityRates] Male ${ageGroup}: ${value}/1000`);
         } else if (sex === 'Females') {
           femaleRates[ageIndex] = value;
+          console.log(`[MortalityRates] Female ${ageGroup}: ${value}/1000`);
         }
       }
     });
+    
+    console.log(`[MortalityRates] Parsed ${rowsParsed} rows, matched ${rowsMatched} age groups`);
 
     cachedMortalityRates = {
       male: maleRates,
       female: femaleRates
     };
 
-    console.log('✓ Mortality rates loaded from 2023 data');
-    console.log('  Male rates (sample):', maleRates.slice(0, 5));
-    console.log('  Female rates (sample):', femaleRates.slice(0, 5));
+    console.log('[MortalityRates] ✓ Mortality rates loaded from 2023 data');
+    console.log('[MortalityRates] Male rates:', maleRates);
+    console.log('[MortalityRates] Female rates:', femaleRates);
+    
+    // Check for any zeros (missing data)
+    const maleZeros = maleRates.filter(r => r === 0).length;
+    const femaleZeros = femaleRates.filter(r => r === 0).length;
+    if (maleZeros > 0 || femaleZeros > 0) {
+      console.warn(`[MortalityRates] WARNING: ${maleZeros} male and ${femaleZeros} female rates are 0`);
+    }
 
     return cachedMortalityRates;
   } catch (error) {
-    console.error('Error loading mortality rates:', error);
+    console.error('[MortalityRates] ERROR loading mortality rates:', error);
+    console.error('[MortalityRates] Stack:', error.stack);
     // Return defaults if load fails
     return {
       male: new Array(21).fill(8.0),
@@ -99,7 +128,8 @@ export async function loadMortalityRates() {
  */
 export function getMortalityRates() {
   if (!cachedMortalityRates) {
-    console.warn('Mortality rates not yet loaded - use loadMortalityRates() first');
+    console.warn('[MortalityRates] Rates not yet loaded - use loadMortalityRates() first');
+    console.warn('[MortalityRates] Returning default 8.0 for all ages');
     return {
       male: new Array(21).fill(8.0),
       female: new Array(21).fill(8.0)
