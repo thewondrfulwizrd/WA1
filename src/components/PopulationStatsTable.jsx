@@ -1,7 +1,7 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { getPopulationByYear } from '../utils/populationHelpers';
 import { applyScenarios } from '../utils/scenarioCalculations';
-import { loadHistoricalBirths, loadHistoricalDeaths, loadHistoricalMigration } from '../utils/historicalDataLoader';
+import { loadHistoricalBirths, loadHistoricalDeaths, loadHistoricalMortality, loadHistoricalMigration } from '../utils/historicalDataLoader';
 import './PopulationStatsTable.css';
 
 const BASELINE_MIGRATION = 400000;
@@ -11,19 +11,22 @@ const BASELINE_MORTALITY = 8.0; // Deaths per 1000 population (realistic rate fo
 export function PopulationStatsTable({ data, scenarios, selectedYear }) {
   const [historicalBirths, setHistoricalBirths] = useState({});
   const [historicalDeaths, setHistoricalDeaths] = useState({});
+  const [historicalMortality, setHistoricalMortality] = useState({});
   const [historicalMigration, setHistoricalMigration] = useState({});
   const [dataLoaded, setDataLoaded] = useState(false);
 
   // Load historical data on mount
   useEffect(() => {
     async function loadData() {
-      const [births, deaths, migration] = await Promise.all([
+      const [births, deaths, mortality, migration] = await Promise.all([
         loadHistoricalBirths(),
         loadHistoricalDeaths(),
+        loadHistoricalMortality(),
         loadHistoricalMigration()
       ]);
       setHistoricalBirths(births);
       setHistoricalDeaths(deaths);
+      setHistoricalMortality(mortality);
       setHistoricalMigration(migration);
       setDataLoaded(true);
     }
@@ -65,7 +68,23 @@ export function PopulationStatsTable({ data, scenarios, selectedYear }) {
       if (isHistorical) {
         // Use actual historical data from Statistics Canada
         births = historicalBirths[year] || 0;
-        deaths = historicalDeaths[year] || 0;
+        
+        // Deaths: use actual data if available, otherwise infer from 2023 mortality rates
+        if (historicalDeaths[year]) {
+          deaths = historicalDeaths[year];
+        } else if (year === 2024 || year === 2025) {
+          // Infer 2024-2025 deaths using 2023 mortality rate
+          const mortality2023 = historicalMortality[2023] || 0;
+          if (mortality2023 > 0) {
+            // mortality rate is per 1000
+            deaths = Math.round((total / 1000) * mortality2023);
+          } else {
+            deaths = 0;
+          }
+        } else {
+          deaths = 0;
+        }
+        
         netMigration = Math.round(historicalMigration[year] || 0);
       } else {
         // Use scenario-adjusted calculations for projected years
@@ -95,7 +114,7 @@ export function PopulationStatsTable({ data, scenarios, selectedYear }) {
         isHistorical
       };
     });
-  }, [data, scenarios, dataLoaded, historicalBirths, historicalDeaths, historicalMigration]);
+  }, [data, scenarios, dataLoaded, historicalBirths, historicalDeaths, historicalMortality, historicalMigration]);
 
   if (!tableData.length) return null;
 
