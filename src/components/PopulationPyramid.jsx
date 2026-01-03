@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { usePopulationData } from '../hooks/usePopulationData';
-import { getYearType, formatPopulation, getPopulationByYear } from '../utils/populationHelpers';
+import { getYearType, formatPopulation } from '../utils/populationHelpers';
 import { applyScenarios } from '../utils/scenarioCalculations';
 import { calculateGlobalMortalityRate } from '../utils/cohortComponentProjection';
 import { ScenarioControls } from './ScenarioControls';
@@ -32,18 +32,6 @@ export function PopulationPyramid() {
       try {
         const result = await applyScenarios(data, scenarios, selectedYear);
         setPopulation(result || { male: [], female: [] });
-        
-        // Calculate baseline mortality for this year
-        // Use population from the year with 0% mortality scenario
-        const baselinePopulation = await getPopulationByYear(data, selectedYear) || result;
-        if (baselinePopulation) {
-          const baseline = await calculateGlobalMortalityRate(
-            baselinePopulation, 
-            { fertility: 0, mortality: 0, migration: 0 }  // 0% scenarios to get baseline
-          );
-          setBaselineMortality(baseline);
-          console.log(`Baseline mortality for ${selectedYear}:`, baseline.toFixed(2), 'per 1000');
-        }
       } catch (err) {
         console.error('Error computing population:', err);
         setPopulation({ male: [], female: [] });
@@ -53,6 +41,29 @@ export function PopulationPyramid() {
     }
     computePopulation();
   }, [data, scenarios, selectedYear]);
+
+  // Calculate baseline mortality separately when year or population changes
+  // Use the current population with 0% mortality adjustment to get baseline
+  useEffect(() => {
+    async function computeBaselineMortality() {
+      if (!population.male.length || !population.female.length) return;
+      
+      try {
+        // Calculate what the mortality rate would be with 0% adjustment
+        const baseline = await calculateGlobalMortalityRate(
+          population,
+          { fertility: 0, mortality: 0, migration: 0 }
+        );
+        
+        setBaselineMortality(baseline);
+        console.log(`Baseline mortality for ${selectedYear}: ${baseline.toFixed(2)} per 1000`);
+      } catch (err) {
+        console.error('Error calculating baseline mortality:', err);
+      }
+    }
+    
+    computeBaselineMortality();
+  }, [selectedYear, population]);
 
   if (loading) return <div>Loading population data...</div>;
   if (error) return <div>Error loading data: {error.message}</div>;
