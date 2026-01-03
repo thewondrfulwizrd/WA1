@@ -57,8 +57,7 @@ export function PopulationPyramid() {
   // Generate year markers for every 10 years
   const yearMarkers = [];
   for (let year = 2000; year <= 2100; year += 10) {
-    const position = ((year - data.yearsObserved[0]) / (data.lastProjectedYear - data.yearsObserved[0])) * 100;
-    yearMarkers.push({ year, position });
+    yearMarkers.push(year);
   }
 
   return (
@@ -87,23 +86,14 @@ export function PopulationPyramid() {
             list="year-markers"
           />
           <datalist id="year-markers">
-            {yearMarkers.map(marker => (
-              <option key={marker.year} value={marker.year}></option>
+            {yearMarkers.map(year => (
+              <option key={year} value={year}></option>
             ))}
           </datalist>
         </div>
         <div className="year-labels">
-          {yearMarkers.map(marker => (
-            <span 
-              key={marker.year} 
-              style={{ 
-                position: 'absolute', 
-                left: `${marker.position}%`,
-                transform: 'translateX(-50%)'
-              }}
-            >
-              {marker.year}
-            </span>
+          {yearMarkers.map(year => (
+            <span key={year}>{year}</span>
           ))}
         </div>
       </div>
