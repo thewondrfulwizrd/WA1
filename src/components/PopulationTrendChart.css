@@ -30,6 +30,8 @@
   overflow: visible;
   width: 100%;
   height: auto;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 /* Grid lines */
@@ -74,11 +76,24 @@
   opacity: 0.5;
 }
 
-.current-year-point {
+/* Draggable outer circle */
+.current-year-point-outer {
   fill: #1976d2;
   stroke: white;
   stroke-width: 2;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  cursor: grab;
+  transition: r 0.2s ease, fill 0.2s ease;
+}
+
+.current-year-point-outer:hover {
+  r: 10;
+  fill: #1565c0;
+}
+
+.current-year-point-outer:active {
+  cursor: grabbing;
+  fill: #0d47a1;
 }
 
 .current-year-label {
