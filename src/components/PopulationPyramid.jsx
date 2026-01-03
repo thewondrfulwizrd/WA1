@@ -5,6 +5,7 @@ import { applyScenarios } from '../utils/scenarioCalculations';
 import { ScenarioControls } from './ScenarioControls';
 import { PopulationTrendChart } from './PopulationTrendChart';
 import { PopulationStatsTable } from './PopulationStatsTable';
+import { YearSlider } from './YearSlider';
 import './PopulationPyramid.css';
 
 export function PopulationPyramid() {
@@ -54,64 +55,26 @@ export function PopulationPyramid() {
     });
   };
 
-  // Generate year markers for every 10 years
-  const yearMarkers = [];
-  for (let year = 2000; year <= 2100; year += 10) {
-    yearMarkers.push(year);
-  }
-
   return (
     <div className="population-pyramid">
+      {/* Canadian Flag SVG */}
+      <div className="canada-flag">
+        <svg viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg">
+          <rect width="250" height="500" fill="#ff0000"/>
+          <rect x="250" width="500" height="500" fill="#ffffff"/>
+          <rect x="750" width="250" height="500" fill="#ff0000"/>
+          <path d="M 500 125 L 475 200 L 400 175 L 450 225 L 425 300 L 500 275 L 575 300 L 550 225 L 600 175 L 525 200 Z" fill="#ff0000"/>
+          <rect x="490" y="275" width="20" height="100" fill="#ff0000"/>
+        </svg>
+      </div>
+      
       <h1>Canada Population Growth Model, 2025-2100</h1>
       
       {/* Population Trend Chart - MOVED TO TOP */}
       <PopulationTrendChart data={data} scenarios={scenarios} selectedYear={selectedYear} onYearChange={setSelectedYear} />
 
-      {/* Year Selector */}
-      <div className="controls">
-        <label>
-          Year: {selectedYear}
-          <span className={`year-badge ${yearType}`}>
-            {yearType === 'observed' ? '📈 Historical' : '🔮 Projected'}
-          </span>
-        </label>
-        <div className="slider-container">
-          <input
-            type="range"
-            min={data.yearsObserved[0]}
-            max={data.lastProjectedYear}
-            value={selectedYear}
-            step={1}
-            onChange={(e) => setSelectedYear(parseInt(e.target.value))}
-            list="year-markers"
-          />
-          <datalist id="year-markers">
-            {yearMarkers.map(year => (
-              <option key={year} value={year}></option>
-            ))}
-          </datalist>
-        </div>
-        <div className="year-labels">
-          {yearMarkers.map(year => (
-            <span key={year}>{year}</span>
-          ))}
-        </div>
-      </div>
-
-      {/* Timeline Indicator */}
-      <div className="timeline-indicator">
-        <div className="timeline-bar">
-          <div 
-            className="observed-section" 
-            style={{ width: `${((data.lastObservedYear - data.yearsObserved[0]) / (data.lastProjectedYear - data.yearsObserved[0])) * 100}%` }}
-          >
-            <span>Historical Data</span>
-          </div>
-          <div className="projected-section">
-            <span>Projected</span>
-          </div>
-        </div>
-      </div>
+      {/* First Year Selector */}
+      <YearSlider data={data} selectedYear={selectedYear} onYearChange={setSelectedYear} yearType={yearType} />
 
       {/* Scenario Controls - Always visible */}
       <ScenarioControls
@@ -187,6 +150,9 @@ export function PopulationPyramid() {
 
       {/* Section Divider */}
       <div className="section-divider"></div>
+
+      {/* Second Year Selector - Between Pyramid and Stats */}
+      <YearSlider data={data} selectedYear={selectedYear} onYearChange={setSelectedYear} yearType={yearType} />
 
       {/* Population Statistics Table */}
       <PopulationStatsTable data={data} scenarios={scenarios} selectedYear={selectedYear} />
