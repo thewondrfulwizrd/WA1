@@ -4,7 +4,7 @@
  * Implements proper demographic projection methodology:
  * 1. Ages each cohort forward by 5 years (cohorts are 5-year age groups)
  * 2. Applies age-specific mortality rates
- * 3. Distributes births to 0-4 age group based on fertility
+ * 3. Calculates births based on reproductive-age females and fertility rate
  * 4. Distributes migration by age-gender proportions from 2024/2025
  */
 
@@ -34,30 +34,16 @@ export async function projectOneYear(currentPopulation, scenarios, data) {
   const baseFemaleRates = mortalityRates.female;  // Already in per-1000 format
 
   // Constants for demographic model
-  const BASELINE_ANNUAL_BIRTHS = 330000; // Actual 2024/2025 births (Statistics Canada)
+  const BASELINE_TFR = 1.5; // Total Fertility Rate (children per woman) - Canada baseline
   const BASELINE_NET_MIGRATION = 400000; // Annual net migration
 
   // Scenario adjustments
-  const fertilityMultiplier = 1 + scenarios.fertility / 100;
+  const adjustedTFR = BASELINE_TFR * (1 + scenarios.fertility / 100);
   const mortalityMultiplier = 1 + scenarios.mortality / 100; // Positive % means more deaths
   const migrationMultiplier = 1 + scenarios.migration / 100;
 
   // Calculate adjusted net migration (scalar value)
   const adjustedNetMigration = Math.round(BASELINE_NET_MIGRATION * migrationMultiplier);
-
-  // MALES: Age forward and apply mortality
-  const projectedMale = new Array(21).fill(0);
-
-  // Age cohorts forward (except 0-4 which are births)
-  for (let i = 20; i > 0; i--) {
-    // Mortality rate is already per-1000, convert to proportion
-    const baseMortalityRatePer1000 = baseMaleRates[i - 1]; // e.g., 8.5 per 1000
-    const adjustedMortalityRatePer1000 = baseMortalityRatePer1000 * mortalityMultiplier;
-    const mortalityProportion = adjustedMortalityRatePer1000 / 1000; // Convert to 0-1 proportion
-    const survivalRate = Math.max(0, Math.min(1, 1 - mortalityProportion));
-
-    projectedMale[i] = Math.round(currentPopulation.male[i - 1] * survivalRate);
-  }
 
   // FEMALES: Age forward and apply mortality
   const projectedFemale = new Array(21).fill(0);
@@ -71,13 +57,34 @@ export async function projectOneYear(currentPopulation, scenarios, data) {
     projectedFemale[i] = Math.round(currentPopulation.female[i - 1] * survivalRate);
   }
 
+  // MALES: Age forward and apply mortality
+  const projectedMale = new Array(21).fill(0);
+
+  for (let i = 20; i > 0; i--) {
+    const baseMortalityRatePer1000 = baseMaleRates[i - 1];
+    const adjustedMortalityRatePer1000 = baseMortalityRatePer1000 * mortalityMultiplier;
+    const mortalityProportion = adjustedMortalityRatePer1000 / 1000;
+    const survivalRate = Math.max(0, Math.min(1, 1 - mortalityProportion));
+
+    projectedMale[i] = Math.round(currentPopulation.male[i - 1] * survivalRate);
+  }
+
   // BIRTHS (ages 0-4 cohort)
-  // Use baseline births adjusted by fertility scenario
-  const births = Math.round(BASELINE_ANNUAL_BIRTHS * fertilityMultiplier);
+  // Calculate from reproductive-age females (15-49, age groups 3-9 inclusive)
+  // Age groups: 0=0-4, 1=5-9, 2=10-14, 3=15-19, 4=20-24, 5=25-29, 6=30-34, 7=35-39, 8=40-44, 9=45-49
+  let reproductiveAgeFemales = 0;
+  for (let i = 3; i <= 9; i++) {
+    reproductiveAgeFemales += currentPopulation.female[i];
+  }
+
+  // Births = reproductive-age females × (TFR / 2) × (1 / 5-year period)
+  // Simplify: Births = reproductive-age females × (TFR / 10)
+  // This gives approximately correct births per year assuming steady-state age distribution
+  const births = Math.round(reproductiveAgeFemales * (adjustedTFR / 10));
 
   // Split births 51% female, 49% male (standard demographic assumption)
-  projectedMale[0] = Math.round(births * 0.49);
   projectedFemale[0] = Math.round(births * 0.51);
+  projectedMale[0] = Math.round(births * 0.49);
 
   // MIGRATION: Distribute by age-gender proportions
   const maleMigration = migrationDist.male.map(share =>
@@ -97,8 +104,10 @@ export async function projectOneYear(currentPopulation, scenarios, data) {
     // Include component details for analysis
     _components: {
       births,
+      reproductiveAgeFemales,
+      adjustedTFR,
       adjustedNetMigration,
-      adjustedMortalityRate: (baseMaleRates[15] * mortalityMultiplier) / 1000 // sample rate for display
+      adjustedMortalityMultiplier: mortalityMultiplier
     }
   };
 }
