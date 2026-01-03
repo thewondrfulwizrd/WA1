@@ -11,13 +11,8 @@
   justify-content: center;
   margin-bottom: var(--space-16);
   padding-top: 0; /* REDUCED: removed padding-top (was 16px) to save 16px. Total saved: 40px */
-}
-
-.canada-flag img {
-  width: 100px;
-  height: 50px;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
-  object-fit: contain;
+  font-size: 100px; /* 150px wide flag emoji */
+  line-height: 1;
 }
 
 .population-pyramid h1 {
@@ -368,8 +363,7 @@
     padding-right: 20px;
   }
   
-  .canada-flag img {
-    width: 80px;
-    height: 40px;
+  .canada-flag {
+    font-size: 60px; /* Smaller on mobile */
   }
 }
