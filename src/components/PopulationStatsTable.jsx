@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { getPopulationByYear } from '../utils/populationHelpers';
 import { applyScenarios } from '../utils/scenarioCalculations';
 import { loadHistoricalBirths, loadHistoricalDeaths, loadHistoricalMortality, loadHistoricalMigration } from '../utils/historicalDataLoader';
@@ -14,6 +14,8 @@ export function PopulationStatsTable({ data, scenarios, selectedYear }) {
   const [historicalMortality, setHistoricalMortality] = useState({});
   const [historicalMigration, setHistoricalMigration] = useState({});
   const [dataLoaded, setDataLoaded] = useState(false);
+  const [tableData, setTableData] = useState([]);
+  const [computingTable, setComputingTable] = useState(false);
 
   // Load historical data on mount
   useEffect(() => {
@@ -42,95 +44,111 @@ export function PopulationStatsTable({ data, scenarios, selectedYear }) {
     loadData();
   }, []);
 
-  const tableData = useMemo(() => {
-    if (!data || !dataLoaded) return [];
-
-    // Show EVERY year instead of every 5 years
-    const years = [...data.yearsObserved, ...data.yearsProjected];
-    
-    let previousTotal = null;
-    
-    return years.map((year, index) => {
-      const population = applyScenarios(data, scenarios, year);
-      const maleTotal = population.male.reduce((sum, val) => sum + val, 0);
-      const femaleTotal = population.female.reduce((sum, val) => sum + val, 0);
-      const total = maleTotal + femaleTotal;
-
-      // Calculate growth (set to "-" for year 2000)
-      let nominalGrowth = 0;
-      let percentGrowth = 0;
-      let showGrowth = true;
+  // Compute table data when scenarios or data change
+  useEffect(() => {
+    async function computeTableData() {
+      if (!data || !dataLoaded) return;
       
-      if (year === 2000) {
-        showGrowth = false; // Show "-" for all components in 2000
-      } else if (previousTotal !== null) {
-        nominalGrowth = total - previousTotal;
-        percentGrowth = (nominalGrowth / previousTotal) * 100; // Per year
-      }
-
-      // Determine if this is a historical year (≤ 2025)
-      const isHistorical = year <= data.lastObservedYear;
-      
-      // Use actual data for historical years, calculated for projected
-      let births, deaths, netMigration;
-      
-      // Year 2000 has no component data (no previous year to compare)
-      if (year === 2000) {
-        births = 0;
-        deaths = 0;
-        netMigration = 0;
-      } else if (isHistorical) {
-        // Use actual historical data from Statistics Canada
-        births = historicalBirths[year] || 0;
+      setComputingTable(true);
+      try {
+        const years = [...data.yearsObserved, ...data.yearsProjected];
+        const computed = [];
+        let previousTotal = null;
         
-        // Deaths: use actual data if available
-        if (historicalDeaths[year]) {
-          deaths = historicalDeaths[year];
-        } else {
-          // For 2024 and 2025, infer from mortality rates
-          // Try to find the most recent mortality rate available
-          let mortRate = historicalMortality[year] || 
-                         historicalMortality[year - 1] || 
-                         historicalMortality[2023] || 
-                         historicalMortality[2022] || 
-                         8.0; // fallback to baseline
+        for (const year of years) {
+          const population = await applyScenarios(data, scenarios, year);
+          if (!population) continue;
           
-          // mortality rate is per 1000 population
-          deaths = Math.round((total / 1000) * mortRate);
+          const maleTotal = population.male.reduce((sum, val) => sum + val, 0);
+          const femaleTotal = population.female.reduce((sum, val) => sum + val, 0);
+          const total = maleTotal + femaleTotal;
+
+          // Calculate growth (set to "-" for year 2000)
+          let nominalGrowth = 0;
+          let percentGrowth = 0;
+          let showGrowth = true;
+          
+          if (year === 2000) {
+            showGrowth = false; // Show "-" for all components in 2000
+          } else if (previousTotal !== null) {
+            nominalGrowth = total - previousTotal;
+            percentGrowth = (nominalGrowth / previousTotal) * 100; // Per year
+          }
+
+          // Determine if this is a historical year (≤ 2025)
+          const isHistorical = year <= data.lastObservedYear;
+          
+          // Use actual data for historical years, calculated for projected
+          let births, deaths, netMigration;
+          
+          // Year 2000 has no component data (no previous year to compare)
+          if (year === 2000) {
+            births = 0;
+            deaths = 0;
+            netMigration = 0;
+          } else if (isHistorical) {
+            // Use actual historical data from Statistics Canada
+            births = historicalBirths[year] || 0;
+            
+            // Deaths: use actual data if available
+            if (historicalDeaths[year]) {
+              deaths = historicalDeaths[year];
+            } else {
+              // For 2024 and 2025, infer from mortality rates
+              // Try to find the most recent mortality rate available
+              let mortRate = historicalMortality[year] || 
+                             historicalMortality[year - 1] || 
+                             historicalMortality[2023] || 
+                             historicalMortality[2022] || 
+                             8.0; // fallback to baseline
+              
+              // mortality rate is per 1000 population
+              deaths = Math.round((total / 1000) * mortRate);
+            }
+            
+            netMigration = Math.round(historicalMigration[year] || 0);
+          } else {
+            // Use scenario-adjusted calculations for projected years
+            const adjustedFertility = BASELINE_FERTILITY * (1 + scenarios.fertility / 100);
+            const adjustedMortality = BASELINE_MORTALITY * (1 - scenarios.mortality / 100);
+            const adjustedMigration = Math.round(BASELINE_MIGRATION * (1 + scenarios.migration / 100));
+            
+            births = Math.round((total / 1000) * (adjustedFertility * 6.67));
+            deaths = Math.round((total / 1000) * adjustedMortality);
+            netMigration = adjustedMigration;
+          }
+          
+          const naturalIncrease = births - deaths;
+
+          previousTotal = total;
+
+          computed.push({
+            year,
+            population: total,
+            nominalGrowth,
+            percentGrowth,
+            showGrowth,
+            births,
+            deaths,
+            naturalIncrease,
+            netMigration,
+            isHistorical
+          });
         }
         
-        netMigration = Math.round(historicalMigration[year] || 0);
-      } else {
-        // Use scenario-adjusted calculations for projected years
-        const adjustedFertility = BASELINE_FERTILITY * (1 + scenarios.fertility / 100);
-        const adjustedMortality = BASELINE_MORTALITY * (1 - scenarios.mortality / 100);
-        const adjustedMigration = Math.round(BASELINE_MIGRATION * (1 + scenarios.migration / 100));
-        
-        births = Math.round((total / 1000) * (adjustedFertility * 6.67));
-        deaths = Math.round((total / 1000) * adjustedMortality);
-        netMigration = adjustedMigration;
+        setTableData(computed);
+      } catch (error) {
+        console.error('Error computing table data:', error);
+        setTableData([]);
+      } finally {
+        setComputingTable(false);
       }
-      
-      const naturalIncrease = births - deaths;
-
-      previousTotal = total;
-
-      return {
-        year,
-        population: total,
-        nominalGrowth,
-        percentGrowth,
-        showGrowth,
-        births,
-        deaths,
-        naturalIncrease,
-        netMigration,
-        isHistorical
-      };
-    });
+    }
+    
+    computeTableData();
   }, [data, scenarios, dataLoaded, historicalBirths, historicalDeaths, historicalMortality, historicalMigration]);
 
-  if (!tableData.length) return null;
+  if (!tableData.length) return <div>Loading statistics table...</div>;
 
   return (
     <div className="population-stats-table-container">
