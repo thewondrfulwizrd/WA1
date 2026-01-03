@@ -78,7 +78,8 @@
   cursor: pointer;
   border-radius: 50%;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  margin-top: -6px; /* Center the thumb on the track */
+  margin-top: -6px; /* Vertically center the 18px thumb on the 6px track */
+  position: relative;
 }
 
 .controls input[type="range"]::-moz-range-thumb {
@@ -89,6 +90,13 @@
   border-radius: 50%;
   border: none;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Firefox track styling to help center */
+.controls input[type="range"]::-moz-range-track {
+  height: 6px;
+  background: #ddd;
+  border-radius: 5px;
 }
 
 .year-labels {
