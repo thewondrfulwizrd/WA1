@@ -4,13 +4,14 @@
  * Implements proper demographic projection methodology:
  * 1. Ages each cohort forward by 5 years (cohorts are 5-year age groups)
  * 2. Applies age-specific mortality rates
- * 3. Calculates births based on reproductive-age females and fertility rate
+ * 3. Calculates births using age-specific fertility rates (ASFR)
  * 4. Distributes migration by age-gender proportions from 2024/2025
  */
 
 import { getPopulationByYear } from './populationHelpers';
 import { getMortalityRates, loadMortalityRates } from './mortalityRates';
 import { getMigrationDistribution, loadMigrationDistribution } from './migrationDistribution';
+import { getAdjustedFertilityRates, calculateBirthsFromASFR } from './fertilityRates';
 
 // Cache for computed projections to avoid recalculating
 let projectionCache = {};
@@ -29,16 +30,16 @@ export async function projectOneYear(currentPopulation, scenarios, data) {
 
   const mortalityRates = getMortalityRates();
   const migrationDist = getMigrationDistribution();
+  const fertilityRates = getAdjustedFertilityRates(scenarios.fertility);
 
   const baseMaleRates = mortalityRates.male;      // Already in per-1000 format
   const baseFemaleRates = mortalityRates.female;  // Already in per-1000 format
+  const adjustedASFRs = fertilityRates.asfrs;    // Age-specific fertility rates
 
   // Constants for demographic model
-  const BASELINE_TFR = 1.5; // Total Fertility Rate (children per woman) - Canada baseline
   const BASELINE_NET_MIGRATION = 400000; // Annual net migration
 
   // Scenario adjustments
-  const adjustedTFR = BASELINE_TFR * (1 + scenarios.fertility / 100);
   const mortalityMultiplier = 1 + scenarios.mortality / 100; // Positive % means more deaths
   const migrationMultiplier = 1 + scenarios.migration / 100;
 
@@ -46,17 +47,11 @@ export async function projectOneYear(currentPopulation, scenarios, data) {
   const adjustedNetMigration = Math.round(BASELINE_NET_MIGRATION * migrationMultiplier);
 
   // FEMALES: Age forward and apply mortality
-  // Process from youngest to oldest to avoid overwriting
+  // Process from oldest to youngest to avoid overwriting
   const projectedFemale = new Array(21).fill(0);
 
   // First, handle the oldest cohort (100+, index 20)
-  // Apply mortality to current pop[20] and it dies out
-  const baseFemaleRateOldest = baseFemaleRates[20];
-  const adjustedFemaleRateOldest = baseFemaleRateOldest * mortalityMultiplier;
-  const femaleDeathPropOldest = adjustedFemaleRateOldest / 1000;
-  const femaleSurvivalRateOldest = Math.max(0, Math.min(1, 1 - femaleDeathPropOldest));
   // The oldest cohort ages out and dies - no one moves to index 21
-  // projectedFemale[20] = 0 (they all age out of the population)
   projectedFemale[20] = 0;
 
   // Now age all younger cohorts forward
@@ -74,10 +69,6 @@ export async function projectOneYear(currentPopulation, scenarios, data) {
   const projectedMale = new Array(21).fill(0);
 
   // First, handle the oldest cohort (100+, index 20)
-  const baseMaleRateOldest = baseMaleRates[20];
-  const adjustedMaleRateOldest = baseMaleRateOldest * mortalityMultiplier;
-  const maleDeathPropOldest = adjustedMaleRateOldest / 1000;
-  const maleSurvivalRateOldest = Math.max(0, Math.min(1, 1 - maleDeathPropOldest));
   // The oldest cohort ages out and dies
   projectedMale[20] = 0;
 
@@ -93,16 +84,9 @@ export async function projectOneYear(currentPopulation, scenarios, data) {
   }
 
   // BIRTHS (ages 0-4 cohort)
-  // Calculate from reproductive-age females (15-49, age groups 3-9 inclusive)
-  // Age groups: 0=0-4, 1=5-9, 2=10-14, 3=15-19, 4=20-24, 5=25-29, 6=30-34, 7=35-39, 8=40-44, 9=45-49
-  let reproductiveAgeFemales = 0;
-  for (let i = 3; i <= 9; i++) {
-    reproductiveAgeFemales += currentPopulation.female[i];
-  }
-
-  // Births = reproductive-age females × (TFR / 10)
-  // This gives approximately correct births per year assuming steady-state age distribution
-  const births = Math.round(reproductiveAgeFemales * (adjustedTFR / 10));
+  // Calculate births using age-specific fertility rates (ASFR)
+  // births = Σ(women_in_age_group × ASFR_for_that_group) for ages 15-49
+  const births = calculateBirthsFromASFR(currentPopulation.female, adjustedASFRs);
 
   // Split births 51% female, 49% male (standard demographic assumption)
   projectedFemale[0] = Math.round(births * 0.51);
@@ -126,8 +110,7 @@ export async function projectOneYear(currentPopulation, scenarios, data) {
     // Include component details for analysis
     _components: {
       births,
-      reproductiveAgeFemales,
-      adjustedTFR,
+      adjustedTFR: fertilityRates.tfr,
       adjustedNetMigration,
       adjustedMortalityMultiplier: mortalityMultiplier
     }
