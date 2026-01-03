@@ -59,10 +59,10 @@ export function PopulationStatsTable({ data, scenarios, selectedYear }) {
       // Calculate growth (set to "-" for year 2000)
       let nominalGrowth = 0;
       let percentGrowth = 0;
-      let showGrowth = true; // false for 2000
+      let showGrowth = true;
       
       if (year === 2000) {
-        showGrowth = false;
+        showGrowth = false; // Show "-" for all components in 2000
       } else if (previousTotal !== null) {
         nominalGrowth = total - previousTotal;
         percentGrowth = (nominalGrowth / previousTotal) * 100; // Per year
@@ -74,7 +74,12 @@ export function PopulationStatsTable({ data, scenarios, selectedYear }) {
       // Use actual data for historical years, calculated for projected
       let births, deaths, netMigration;
       
-      if (isHistorical) {
+      // Year 2000 has no component data (no previous year to compare)
+      if (year === 2000) {
+        births = 0;
+        deaths = 0;
+        netMigration = 0;
+      } else if (isHistorical) {
         // Use actual historical data from Statistics Canada
         births = historicalBirths[year] || 0;
         
@@ -168,16 +173,16 @@ export function PopulationStatsTable({ data, scenarios, selectedYear }) {
                     {!row.showGrowth ? '-' : (row.percentGrowth > 0 ? '+' : '') + row.percentGrowth.toFixed(2) + '%'}
                   </td>
                   <td className="number-cell">
-                    {row.births > 0 ? (row.births / 1000).toFixed(0) + 'K' : '0K'}
+                    {!row.showGrowth ? '-' : (row.births > 0 ? (row.births / 1000).toFixed(0) + 'K' : '0K')}
                   </td>
                   <td className="number-cell">
-                    {row.deaths > 0 ? (row.deaths / 1000).toFixed(0) + 'K' : '0K'}
+                    {!row.showGrowth ? '-' : (row.deaths > 0 ? (row.deaths / 1000).toFixed(0) + 'K' : '0K')}
                   </td>
                   <td className={`number-cell ${row.naturalIncrease >= 0 ? 'positive' : 'negative'}`}>
-                    {row.naturalIncrease > 0 ? '+' : ''}{(row.naturalIncrease / 1000).toFixed(0)}K
+                    {!row.showGrowth ? '-' : (row.naturalIncrease > 0 ? '+' : '') + (row.naturalIncrease / 1000).toFixed(0) + 'K'}
                   </td>
                   <td className="number-cell migration-cell">
-                    {row.netMigration > 0 ? '+' : ''}{(row.netMigration / 1000).toFixed(0)}K
+                    {!row.showGrowth ? '-' : (row.netMigration > 0 ? '+' : '') + (row.netMigration / 1000).toFixed(0) + 'K'}
                   </td>
                 </tr>
                 {/* Add demarcation line between 2025 and 2026 */}
