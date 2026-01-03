@@ -24,6 +24,15 @@ export function PopulationStatsTable({ data, scenarios, selectedYear }) {
         loadHistoricalMortality(),
         loadHistoricalMigration()
       ]);
+      
+      console.log('Loaded births:', Object.keys(births).length, 'years');
+      console.log('Loaded deaths:', Object.keys(deaths).length, 'years');
+      console.log('Loaded mortality:', Object.keys(mortality).length, 'years');
+      console.log('Loaded migration:', Object.keys(migration).length, 'years');
+      console.log('Sample births 2024:', births[2024], '2025:', births[2025]);
+      console.log('Sample deaths 2023:', deaths[2023], '2024:', deaths[2024], '2025:', deaths[2025]);
+      console.log('Sample migration 2024:', migration[2024], '2025:', migration[2025]);
+      
       setHistoricalBirths(births);
       setHistoricalDeaths(deaths);
       setHistoricalMortality(mortality);
@@ -69,30 +78,20 @@ export function PopulationStatsTable({ data, scenarios, selectedYear }) {
         // Use actual historical data from Statistics Canada
         births = historicalBirths[year] || 0;
         
-        // Deaths: use actual data if available, otherwise infer from mortality rates
+        // Deaths: use actual data if available
         if (historicalDeaths[year]) {
           deaths = historicalDeaths[year];
-        } else if (year === 2024 || year === 2025) {
-          // Try to infer from available mortality data
-          // For 2024: use 2024 mortality rate if available, else 2023
-          // For 2025: use 2024 mortality rate if available, else 2023
-          let mortRate = 0;
-          if (year === 2024 && historicalMortality[2024]) {
-            mortRate = historicalMortality[2024];
-          } else if (historicalMortality[2023]) {
-            mortRate = historicalMortality[2023];
-          } else if (historicalMortality[2024]) {
-            mortRate = historicalMortality[2024];
-          }
-          
-          if (mortRate > 0) {
-            // mortality rate is per 1000
-            deaths = Math.round((total / 1000) * mortRate);
-          } else {
-            deaths = 0;
-          }
         } else {
-          deaths = 0;
+          // For 2024 and 2025, infer from mortality rates
+          // Try to find the most recent mortality rate available
+          let mortRate = historicalMortality[year] || 
+                         historicalMortality[year - 1] || 
+                         historicalMortality[2023] || 
+                         historicalMortality[2022] || 
+                         8.0; // fallback to baseline
+          
+          // mortality rate is per 1000 population
+          deaths = Math.round((total / 1000) * mortRate);
         }
         
         netMigration = Math.round(historicalMigration[year] || 0);
@@ -169,10 +168,10 @@ export function PopulationStatsTable({ data, scenarios, selectedYear }) {
                     {!row.showGrowth ? '-' : (row.percentGrowth > 0 ? '+' : '') + row.percentGrowth.toFixed(2) + '%'}
                   </td>
                   <td className="number-cell">
-                    {(row.births / 1000).toFixed(0)}K
+                    {row.births > 0 ? (row.births / 1000).toFixed(0) + 'K' : '0K'}
                   </td>
                   <td className="number-cell">
-                    {(row.deaths / 1000).toFixed(0)}K
+                    {row.deaths > 0 ? (row.deaths / 1000).toFixed(0) + 'K' : '0K'}
                   </td>
                   <td className={`number-cell ${row.naturalIncrease >= 0 ? 'positive' : 'negative'}`}>
                     {row.naturalIncrease > 0 ? '+' : ''}{(row.naturalIncrease / 1000).toFixed(0)}K
