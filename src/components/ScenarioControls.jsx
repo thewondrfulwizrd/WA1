@@ -2,13 +2,14 @@ import React from 'react';
 import './ScenarioControls.css';
 
 const BASELINE_FERTILITY = 1.5; // Total Fertility Rate
-const BASELINE_MORTALITY = 75; // Crude death rate per 1000 (inverse for simplicity)
+const BASELINE_MORTALITY = 75; // Crude death rate per 1000
 const BASELINE_MIGRATION = 400000; // Net migration per year
 
 export function ScenarioControls({ scenarios, onScenarioChange, onReset, isHistorical }) {
   // Calculate adjusted baseline figures
   const adjustedFertility = BASELINE_FERTILITY * (1 + scenarios.fertility / 100);
-  const adjustedMortality = BASELINE_MORTALITY * (1 + scenarios.mortality / 100);
+  // MORTALITY IS INVERTED: negative slider value = lower mortality rate = better health
+  const adjustedMortality = BASELINE_MORTALITY * (1 - scenarios.mortality / 100);
   const adjustedMigration = Math.round(BASELINE_MIGRATION * (1 + scenarios.migration / 100));
 
   return (
@@ -61,14 +62,15 @@ export function ScenarioControls({ scenarios, onScenarioChange, onReset, isHisto
           </div>
         </div>
 
-        {/* Mortality Rate Slider */}
+        {/* Mortality Rate Slider - INVERTED LOGIC */}
         <div className="scenario-item">
           <div className="scenario-label-row">
             <label>
               <span className="scenario-icon">🏥</span>
               Mortality Rate
             </label>
-            <span className={`scenario-value ${scenarios.mortality === 0 ? 'baseline' : scenarios.mortality > 0 ? 'decrease' : 'increase'}`}>
+            {/* INVERTED: Negative % = lower mortality = green/better */}
+            <span className={`scenario-value ${scenarios.mortality === 0 ? 'baseline' : scenarios.mortality < 0 ? 'decrease' : 'increase'}`}>
               {scenarios.mortality > 0 ? '+' : ''}{scenarios.mortality}%
             </span>
           </div>
@@ -84,9 +86,9 @@ export function ScenarioControls({ scenarios, onScenarioChange, onReset, isHisto
           />
           
           <div className="scenario-markers">
-            <span>-50% (worse)</span>
+            <span>-50% (better)</span>
             <span className="baseline-marker">0%</span>
-            <span>+50% (better)</span>
+            <span>+50% (worse)</span>
           </div>
           
           <div className="baseline-display">

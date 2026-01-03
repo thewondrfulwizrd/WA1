@@ -27,7 +27,8 @@ export function applyScenarios(data, scenarios, year) {
   // All scenarios are percentage changes: -100 to +100+ range
   // Convert to multipliers: 0% change = 1.0, +50% = 1.5, -50% = 0.5
   const fertilityMultiplier = 1 + (scenarios.fertility / 100);
-  const mortalityMultiplier = 1 + (scenarios.mortality / 100);
+  // MORTALITY IS INVERTED: negative value = lower mortality = better survival = more population
+  const mortalityMultiplier = 1 - (scenarios.mortality / 100);
   const migrationMultiplier = 1 + (scenarios.migration / 100);
   
   // Age group indices for scenario effects
@@ -44,7 +45,7 @@ export function applyScenarios(data, scenarios, year) {
     }
     
     // MORTALITY: affects survival rates, mainly impacts older population (65+)
-    // Positive mortality value = better health (lower mortality = more survival)
+    // Negative mortality % = lower death rate = more elderly survive
     // Age 13-20 are roughly 65+
     if (ageIndex >= 13) {
       adjusted *= mortalityMultiplier;
