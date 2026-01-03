@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { usePopulationData } from '../hooks/usePopulationData';
-import { getYearType, formatPopulation } from '../utils/populationHelpers';
+import { getYearType, formatPopulation, getPopulationByYear } from '../utils/populationHelpers';
 import { applyScenarios } from '../utils/scenarioCalculations';
+import { calculateGlobalMortalityRate } from '../utils/cohortComponentProjection';
 import { ScenarioControls } from './ScenarioControls';
 import { PopulationTrendChart } from './PopulationTrendChart';
 import { PopulationStatsTable } from './PopulationStatsTable';
@@ -9,30 +10,6 @@ import { YearSlider } from './YearSlider';
 import { DebugTable } from './DebugTable';
 import './PopulationPyramid.css';
 import './DebugTable.css';
-
-/**
- * Calculate baseline mortality rate for a given year
- * Mortality rate = (deaths in that year / population in that year) * 1000
- * 
- * For observed years: use reported deaths from data
- * For projected years: calculate from projection
- */
-function calculateBaselineMortality(data, year) {
-  if (!data) return 7.5; // Default fallback
-  
-  // Check if this is an observed year
-  if (data.observed && data.observed[year]) {
-    const yearData = data.observed[year];
-    if (yearData.deaths !== undefined && yearData.population !== undefined) {
-      return (yearData.deaths / yearData.population) * 1000;
-    }
-  }
-  
-  // For projected years, we'd need the projection data
-  // For now, use approximation based on age structure
-  // Canada's baseline mortality: ~7-8 per 1000
-  return 7.5; // Default Canada baseline
-}
 
 export function PopulationPyramid() {
   const { data, loading, error } = usePopulationData();
@@ -57,8 +34,16 @@ export function PopulationPyramid() {
         setPopulation(result || { male: [], female: [] });
         
         // Calculate baseline mortality for this year
-        const baseline = calculateBaselineMortality(data, selectedYear);
-        setBaselineMortality(baseline);
+        // Use population from the year with 0% mortality scenario
+        const baselinePopulation = await getPopulationByYear(data, selectedYear) || result;
+        if (baselinePopulation) {
+          const baseline = await calculateGlobalMortalityRate(
+            baselinePopulation, 
+            { fertility: 0, mortality: 0, migration: 0 }  // 0% scenarios to get baseline
+          );
+          setBaselineMortality(baseline);
+          console.log(`Baseline mortality for ${selectedYear}:`, baseline.toFixed(2), 'per 1000');
+        }
       } catch (err) {
         console.error('Error computing population:', err);
         setPopulation({ male: [], female: [] });
