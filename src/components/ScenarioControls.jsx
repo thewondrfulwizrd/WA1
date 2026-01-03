@@ -62,7 +62,7 @@ export function ScenarioControls({ scenarios, onScenarioChange, onReset, isHisto
           </div>
         </div>
 
-        {/* Mortality Rate Slider */}
+        {/* Mortality Rate Slider - INVERTED COLORS */}
         <div className="scenario-item">
           <div className="scenario-label-row">
             <label>
@@ -82,7 +82,7 @@ export function ScenarioControls({ scenarios, onScenarioChange, onReset, isHisto
             value={scenarios.mortality}
             step="5"
             onChange={(e) => onScenarioChange('mortality', parseInt(e.target.value))}
-            className="slider"
+            className="slider slider-inverted"
           />
           
           <div className="scenario-markers">

@@ -132,6 +132,17 @@ input[type="range"].slider {
   position: relative;
 }
 
+/* INVERTED slider for mortality - GREEN on left (better), RED on right (worse) */
+input[type="range"].slider-inverted {
+  background: linear-gradient(
+    to right,
+    #26a69a 0%,
+    #26a69a 50%,
+    #ef5350 50%,
+    #ef5350 100%
+  );
+}
+
 /* Webkit browsers (Chrome, Safari, Edge) */
 input[type="range"].slider::-webkit-slider-thumb {
   -webkit-appearance: none;
