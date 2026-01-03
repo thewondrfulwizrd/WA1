@@ -1,141 +1,106 @@
 /**
- * Load mortality rates by age and gender from Statistics Canada data
- * Uses 2023 as the base year (last year with complete data)
+ * Mortality rates by age and gender from Statistics Canada 2023 data
+ * Rates are per 1,000 population
+ * 
+ * Age cohorts (21 groups):
+ * 0: 0-4, 1: 5-9, 2: 10-14, 3: 15-19, 4: 20-24, 5: 25-29, 6: 30-34, 7: 35-39,
+ * 8: 40-44, 9: 45-49, 10: 50-54, 11: 55-59, 12: 60-64, 13: 65-69, 14: 70-74,
+ * 15: 75-79, 16: 80-84, 17: 85-89, 18: 90-94, 19: 95-99, 20: 100+
  */
 
-let cachedMortalityRates = null;
+// Base mortality rates from Statistics Canada 2023 (per 1,000 population)
+const MORTALITY_RATES = {
+  female: [
+    1.00,        // 0-4 years
+    0.10,        // 5-9 years
+    0.10,        // 10-14 years
+    0.30,        // 15-19 years
+    0.45,        // 20-24 years
+    0.55,        // 25-29 years
+    0.70,        // 30-34 years
+    0.85,        // 35-39 years
+    1.10,        // 40-44 years
+    1.60,        // 45-49 years
+    2.30,        // 50-54 years
+    3.65,        // 55-59 years
+    5.75,        // 60-64 years
+    9.00,        // 65-69 years
+    14.20,       // 70-74 years
+    24.25,       // 75-79 years
+    42.90,       // 80-84 years
+    80.20,       // 85-89 years
+    143.639368,  // 90-94 years
+    241.758242,  // 95-99 years
+    351.543309   // 100+ years
+  ],
+  male: [
+    1.05,        // 0-4 years
+    0.10,        // 5-9 years
+    0.10,        // 10-14 years
+    0.50,        // 15-19 years
+    0.75,        // 20-24 years
+    1.10,        // 25-29 years
+    1.40,        // 30-34 years
+    1.70,        // 35-39 years
+    2.10,        // 40-44 years
+    2.65,        // 45-49 years
+    4.00,        // 50-54 years
+    6.15,        // 55-59 years
+    9.20,        // 60-64 years
+    14.05,       // 65-69 years
+    21.70,       // 70-74 years
+    34.80,       // 75-79 years
+    60.40,       // 80-84 years
+    110.75,      // 85-89 years
+    185.467822,  // 90-94 years
+    278.554094,  // 95-99 years
+    401.356994   // 100+ years
+  ]
+};
 
 /**
- * Load and parse mortality rates from CSV
- * Returns object with structure: { male: [rates], female: [rates] }
- * Index corresponds to age group index (0=0-4, 1=5-9, ..., 20=100+)
+ * Get mortality rates (always available, no async loading needed)
  */
-export async function loadMortalityRates() {
-  // Return cached version if already loaded
-  if (cachedMortalityRates) {
-    console.log('[MortalityRates] Using cached rates');
-    return cachedMortalityRates;
-  }
-
-  console.log('[MortalityRates] Loading from CSV...');
-
-  try {
-    const response = await fetch('/data/source/Base_Mortality.csv');
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const csv = await response.text();
-    console.log('[MortalityRates] CSV loaded, length:', csv.length);
-    
-    const lines = csv.trim().split('\n').slice(1); // Skip header
-    console.log('[MortalityRates] Number of data lines:', lines.length);
-
-    // Map of age group names to indices
-    // CRITICAL: Use EXACT strings from CSV file
-    const ageGroupIndices = {
-      'Age at time of death, 1 to 4 years': 0,      // Use for 0-4 cohort (close enough)
-      'Age at time of death, 5 to 9 years': 1,
-      'Age at time of death, 10 to 14 years': 2,
-      'Age at time of death, 15 to 19 years': 3,
-      'Age at time of death, 20 to 24 years': 4,
-      'Age at time of death, 25 to 29 years': 5,
-      'Age at time of death, 30 to 34 years': 6,
-      'Age at time of death, 35 to 39 years': 7,
-      'Age at time of death, 40 to 44 years': 8,
-      'Age at time of death, 45 to 49 years': 9,
-      'Age at time of death, 50 to 54 years': 10,
-      'Age at time of death, 55 to 59 years': 11,
-      'Age at time of death, 60 to 64 years': 12,
-      'Age at time of death, 65 to 69 years': 13,
-      'Age at time of death, 70 to 74 years': 14,
-      'Age at time of death, 75 to 79 years': 15,
-      'Age at time of death, 80 to 84 years': 16,
-      'Age at time of death, 85 to 89 years': 17,
-      'Age at time of death, 90 to 94 years': 18,
-      'Age at time of death, 95 to 99 years': 19,
-      'Age at time of death, 100 years and over': 20
-    };
-
-    const maleRates = new Array(21).fill(0);
-    const femaleRates = new Array(21).fill(0);
-    
-    let rowsParsed = 0;
-    let rowsMatched = 0;
-
-    lines.forEach(line => {
-      const matches = line.match(/"([^"]*)"|[^,]+/g);
-      if (!matches || matches.length < 13) return;
-      
-      rowsParsed++;
-
-      // Extract fields (adjust column indices based on CSV structure)
-      const refDate = matches[0].replace(/"/g, '').trim();
-      const ageGroup = matches[3].replace(/"/g, '').trim();
-      const sex = matches[4].replace(/"/g, '').trim();
-      const valueStr = matches[12].replace(/"/g, '').trim();
-      const value = parseFloat(valueStr);
-
-      if (isNaN(value) || refDate !== '2023') return;
-
-      // Skip "All ages" rows - we only want specific age groups
-      if (ageGroup === 'Age at time of death, all ages') return;
-
-      const ageIndex = ageGroupIndices[ageGroup];
-      if (ageIndex !== undefined) {
-        rowsMatched++;
-        if (sex === 'Males') {
-          maleRates[ageIndex] = value;
-          console.log(`[MortalityRates] Male [${ageIndex}] ${ageGroup}: ${value}/1000`);
-        } else if (sex === 'Females') {
-          femaleRates[ageIndex] = value;
-          console.log(`[MortalityRates] Female [${ageIndex}] ${ageGroup}: ${value}/1000`);
-        }
-      }
-    });
-    
-    console.log(`[MortalityRates] Parsed ${rowsParsed} rows, matched ${rowsMatched} age groups`);
-
-    cachedMortalityRates = {
-      male: maleRates,
-      female: femaleRates
-    };
-
-    console.log('[MortalityRates] ✓ Mortality rates loaded from 2023 data');
-    console.log('[MortalityRates] Male rates:', maleRates);
-    console.log('[MortalityRates] Female rates:', femaleRates);
-    
-    // Check for any zeros (missing data)
-    const maleZeros = maleRates.filter(r => r === 0).length;
-    const femaleZeros = femaleRates.filter(r => r === 0).length;
-    if (maleZeros > 0 || femaleZeros > 0) {
-      console.warn(`[MortalityRates] WARNING: ${maleZeros} male and ${femaleZeros} female rates are 0`);
-    }
-
-    return cachedMortalityRates;
-  } catch (error) {
-    console.error('[MortalityRates] ERROR loading mortality rates:', error);
-    console.error('[MortalityRates] Stack:', error.stack);
-    // Return defaults if load fails
-    return {
-      male: new Array(21).fill(8.0),
-      female: new Array(21).fill(8.0)
-    };
-  }
+export function getMortalityRates() {
+  return MORTALITY_RATES;
 }
 
 /**
- * Get mortality rates synchronously (must be pre-loaded)
+ * Load mortality rates (for compatibility with async loading pattern)
+ * Returns immediately since data is hardcoded
  */
-export function getMortalityRates() {
-  if (!cachedMortalityRates) {
-    console.warn('[MortalityRates] Rates not yet loaded - use loadMortalityRates() first');
-    console.warn('[MortalityRates] Returning default 8.0 for all ages');
-    return {
-      male: new Array(21).fill(8.0),
-      female: new Array(21).fill(8.0)
-    };
-  }
-  return cachedMortalityRates;
+export async function loadMortalityRates() {
+  console.log('[MortalityRates] Using hardcoded 2023 baseline rates');
+  console.log('[MortalityRates] Female rates:', MORTALITY_RATES.female);
+  console.log('[MortalityRates] Male rates:', MORTALITY_RATES.male);
+  return MORTALITY_RATES;
+}
+
+/**
+ * Get the age cohort index for a given age
+ * @param {number} age - Age in years
+ * @returns {number} Cohort index (0-20)
+ */
+export function getAgeCohortIndex(age) {
+  if (age < 5) return 0;
+  if (age < 10) return 1;
+  if (age < 15) return 2;
+  if (age < 20) return 3;
+  if (age < 25) return 4;
+  if (age < 30) return 5;
+  if (age < 35) return 6;
+  if (age < 40) return 7;
+  if (age < 45) return 8;
+  if (age < 50) return 9;
+  if (age < 55) return 10;
+  if (age < 60) return 11;
+  if (age < 65) return 12;
+  if (age < 70) return 13;
+  if (age < 75) return 14;
+  if (age < 80) return 15;
+  if (age < 85) return 16;
+  if (age < 90) return 17;
+  if (age < 95) return 18;
+  if (age < 100) return 19;
+  return 20; // 100+
 }
