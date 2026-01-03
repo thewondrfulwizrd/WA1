@@ -3,7 +3,7 @@ import { applyScenarios } from '../utils/scenarioCalculations';
 import { getMortalityRates, loadMortalityRates } from '../utils/mortalityRates';
 import { getMigrationDistribution, loadMigrationDistribution } from '../utils/migrationDistribution';
 import { getAdjustedFertilityRates, calculateBirthsFromASFR } from '../utils/fertilityRates';
-import { loadHistoricalMigration, loadHistoricalBirths, loadHistoricalDeaths } from '../utils/historicalDataLoader';
+import { loadHistoricalMigration, loadHistoricalBirths, loadHistoricalDeaths, loadHistoricalMortality } from '../utils/historicalDataLoader';
 import './DebugTable.css';
 
 export function DebugTable({ data, scenarios, visible }) {
@@ -12,18 +12,21 @@ export function DebugTable({ data, scenarios, visible }) {
   const [historicalMigration, setHistoricalMigration] = useState({});
   const [historicalBirths, setHistoricalBirths] = useState({});
   const [historicalDeaths, setHistoricalDeaths] = useState({});
+  const [historicalMortality, setHistoricalMortality] = useState({});
 
   // Load historical data
   useEffect(() => {
     async function loadHistoricalData() {
-      const [migration, births, deaths] = await Promise.all([
+      const [migration, births, deaths, mortality] = await Promise.all([
         loadHistoricalMigration(),
         loadHistoricalBirths(),
-        loadHistoricalDeaths()
+        loadHistoricalDeaths(),
+        loadHistoricalMortality()
       ]);
       setHistoricalMigration(migration);
       setHistoricalBirths(births);
       setHistoricalDeaths(deaths);
+      setHistoricalMortality(mortality);
     }
     loadHistoricalData();
   }, []);
@@ -84,8 +87,21 @@ export function DebugTable({ data, scenarios, visible }) {
           let totalNetMigration = 0;
 
           if (isHistorical) {
-            // Use actual historical data
-            totalDeaths = historicalDeaths[year] || 0;
+            // Use actual historical data if available
+            if (historicalDeaths[year]) {
+              totalDeaths = historicalDeaths[year];
+            } else {
+              // For 2024 and 2025 (or any year missing deaths data),
+              // estimate from mortality rates
+              const mortRate = historicalMortality[year] || 
+                             historicalMortality[year - 1] || 
+                             historicalMortality[2023] || 
+                             historicalMortality[2022] || 
+                             8.0; // fallback to baseline
+              totalDeaths = Math.round((total / 1000) * mortRate);
+              console.log(`Estimated deaths for ${year} using mortality rate ${mortRate}: ${totalDeaths}`);
+            }
+            
             totalNetMigration = Math.round(historicalMigration[year] || 0);
           } else {
             // Calculate for projected years
@@ -206,7 +222,7 @@ export function DebugTable({ data, scenarios, visible }) {
     }
 
     computeDebugData();
-  }, [visible, data, scenarios, historicalMigration, historicalBirths, historicalDeaths]);
+  }, [visible, data, scenarios, historicalMigration, historicalBirths, historicalDeaths, historicalMortality]);
 
   if (!visible) return null;
   if (loading) return <div className="debug-table-container">Loading debug data...</div>;
@@ -216,7 +232,8 @@ export function DebugTable({ data, scenarios, visible }) {
     <div className="debug-table-container">
       <h2 className="debug-heading">🔍 Projection Breakdown (2020-2035)</h2>
       <div className="table-description">
-        Historical years (2020-2025) use actual Statistics Canada data. 
+        Historical years (2020-2025) use actual Statistics Canada data where available. 
+        Missing data (e.g., 2024-2025 deaths) is estimated from mortality rates.
         Projected years (2026-2035) use scenario-adjusted calculations.
       </div>
       <div className="debug-table-wrapper">
