@@ -6,7 +6,9 @@ import { ScenarioControls } from './ScenarioControls';
 import { PopulationTrendChart } from './PopulationTrendChart';
 import { PopulationStatsTable } from './PopulationStatsTable';
 import { YearSlider } from './YearSlider';
+import { DebugTable } from './DebugTable';
 import './PopulationPyramid.css';
+import './DebugTable.css';
 
 export function PopulationPyramid() {
   const { data, loading, error } = usePopulationData();
@@ -18,6 +20,7 @@ export function PopulationPyramid() {
   });
   const [population, setPopulation] = useState({ male: [], female: [] });
   const [projectionLoading, setProjectionLoading] = useState(false);
+  const [showDebugTable, setShowDebugTable] = useState(false);
 
   // Compute population when year or scenarios change
   useEffect(() => {
@@ -172,6 +175,21 @@ export function PopulationPyramid() {
 
       {/* Population Statistics Table */}
       <PopulationStatsTable data={data} scenarios={scenarios} selectedYear={selectedYear} />
+
+      {/* Debug Button */}
+      <button 
+        className="debug-button"
+        onClick={() => setShowDebugTable(!showDebugTable)}
+      >
+        {showDebugTable ? '🔼 Hide Debug Breakdown' : '🔽 Show Debug Breakdown'}
+      </button>
+
+      {/* Debug Table */}
+      <DebugTable 
+        data={data} 
+        scenarios={scenarios} 
+        visible={showDebugTable}
+      />
     </div>
   );
 }
