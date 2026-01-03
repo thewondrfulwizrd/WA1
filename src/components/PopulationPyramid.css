@@ -55,10 +55,17 @@
   color: #000000;
 }
 
+/* Slider container to match chart width */
+.slider-container {
+  position: relative;
+  margin: 8px auto;
+  padding-left: 80px;  /* Match chart: container padding (20px) + SVG left padding (60px) */
+  padding-right: 40px; /* Match chart: container padding (20px) + SVG right padding (20px) */
+  max-width: calc(100% - 0px); /* Full width of parent */
+}
+
 .controls input[type="range"] {
   width: 100%;
-  max-width: 1400px;
-  margin: 8px auto;
   display: block;
   cursor: pointer;
   height: 8px;
@@ -117,9 +124,8 @@
   font-size: 0.85em;
   color: #333333;
   margin-top: 4px;
-  max-width: 1400px;
-  margin-left: auto;
-  margin-right: auto;
+  padding-left: 80px;  /* Match slider alignment */
+  padding-right: 40px;
   height: 20px;
 }
 
@@ -148,7 +154,8 @@
 
 .timeline-indicator {
   margin: var(--space-20) auto;
-  max-width: 1400px;
+  padding-left: 80px;  /* Match slider alignment */
+  padding-right: 40px;
 }
 
 .timeline-bar {
@@ -334,5 +341,13 @@
 @media (max-width: 768px) {
   .pyramid-year-display {
     font-size: 3rem;
+  }
+  
+  /* Adjust padding for smaller screens */
+  .slider-container,
+  .year-labels,
+  .timeline-indicator {
+    padding-left: 40px;
+    padding-right: 20px;
   }
 }
