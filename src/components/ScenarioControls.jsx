@@ -1,15 +1,26 @@
 import React from 'react';
 import './ScenarioControls.css';
 
-const BASELINE_FERTILITY = 1.5; // Total Fertility Rate
-const BASELINE_MORTALITY = 75; // Crude death rate per 1000
+const BASELINE_FERTILITY = 1.25; // Total Fertility Rate - updated to match Canada's 2023-2024
 const BASELINE_MIGRATION = 400000; // Net migration per year
 
-export function ScenarioControls({ scenarios, onScenarioChange, onReset, isHistorical }) {
+/**
+ * ScenarioControls component
+ * 
+ * Key changes:
+ * - BASELINE_FERTILITY updated to 1.25 (Canada's actual TFR)
+ * - baselineMortality is now passed as a prop (calculated from actual year data)
+ * - Mortality rate displayed is year-dependent and reflects actual deaths/population
+ */
+export function ScenarioControls({ scenarios, onScenarioChange, onReset, isHistorical, baselineMortality }) {
+  // Use passed-in baseline mortality (calculated from actual year data)
+  // Default to 7.5 if not provided (fallback to approximate Canada average)
+  const displayedBaselineMortality = baselineMortality || 7.5;
+
   // Calculate adjusted baseline figures
   const adjustedFertility = BASELINE_FERTILITY * (1 + scenarios.fertility / 100);
   // MORTALITY: Positive % = higher mortality rate (worse), Negative % = lower mortality rate (better)
-  const adjustedMortality = BASELINE_MORTALITY * (1 + scenarios.mortality / 100);
+  const adjustedMortality = displayedBaselineMortality * (1 + scenarios.mortality / 100);
   const adjustedMigration = Math.round(BASELINE_MIGRATION * (1 + scenarios.migration / 100));
 
   return (
@@ -98,8 +109,13 @@ export function ScenarioControls({ scenarios, onScenarioChange, onReset, isHisto
             </div>
             <div className="baseline-item">
               <span className="baseline-label">Baseline</span>
-              <span className="baseline-original">{BASELINE_MORTALITY.toFixed(1)}/1000</span>
+              <span className="baseline-original">{displayedBaselineMortality.toFixed(1)}/1000</span>
             </div>
+          </div>
+          
+          {/* Note about year-dependent baseline */}
+          <div className="scenario-note">
+            <small>Baseline mortality for selected year (calculated from deaths/population)</small>
           </div>
         </div>
 
