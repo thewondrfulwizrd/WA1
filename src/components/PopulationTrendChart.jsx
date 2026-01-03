@@ -1,9 +1,12 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { getPopulationByYear, getTotalPopulation } from '../utils/populationHelpers';
 import { applyScenarios } from '../utils/scenarioCalculations';
 import './PopulationTrendChart.css';
 
-export function PopulationTrendChart({ data, scenarios, selectedYear }) {
+export function PopulationTrendChart({ data, scenarios, selectedYear, onYearChange }) {
+  const svgRef = useRef(null);
+  const [isDragging, setIsDragging] = useState(false);
+
   const chartData = useMemo(() => {
     if (!data) return [];
 
@@ -27,7 +30,7 @@ export function PopulationTrendChart({ data, scenarios, selectedYear }) {
   // Calculate chart dimensions
   const width = 1000;
   const height = 300;
-  const padding = { top: 20, right: 20, bottom: 40, left: 60 };
+  const padding = { top: 30, right: 20, bottom: 40, left: 60 };
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
 
@@ -88,10 +91,81 @@ export function PopulationTrendChart({ data, scenarios, selectedYear }) {
     }
   }
 
+  // Handle drag/click on the chart
+  const handleChartInteraction = (event) => {
+    if (!svgRef.current || !onYearChange) return;
+
+    const svg = svgRef.current;
+    const rect = svg.getBoundingClientRect();
+    const svgWidth = rect.width;
+    const scaleX = width / svgWidth;
+    
+    // Get mouse/touch position relative to SVG
+    const clientX = event.type.includes('touch') ? event.touches[0].clientX : event.clientX;
+    const clickX = (clientX - rect.left) * scaleX;
+    
+    // Convert to chart coordinates
+    const chartX = clickX - padding.left;
+    if (chartX < 0 || chartX > chartWidth) return;
+    
+    // Find nearest year
+    const fraction = chartX / chartWidth;
+    const yearIndex = Math.round(fraction * (chartData.length - 1));
+    const newYear = chartData[yearIndex]?.year;
+    
+    if (newYear && newYear >= data.yearsObserved[0] && newYear <= data.lastProjectedYear) {
+      onYearChange(newYear);
+    }
+  };
+
+  const handleMouseDown = (e) => {
+    setIsDragging(true);
+    handleChartInteraction(e);
+  };
+
+  const handleMouseMove = (e) => {
+    if (isDragging) {
+      handleChartInteraction(e);
+    }
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleTouchStart = (e) => {
+    setIsDragging(true);
+    handleChartInteraction(e);
+  };
+
+  const handleTouchMove = (e) => {
+    if (isDragging) {
+      e.preventDefault();
+      handleChartInteraction(e);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
+
   return (
     <div className="population-trend-chart">
       <div className="chart-container">
-        <svg width="100%" viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMidYMid meet">
+        <svg 
+          ref={svgRef}
+          width="100%" 
+          viewBox={`0 0 ${width} ${height}`} 
+          preserveAspectRatio="xMidYMid meet"
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          style={{ cursor: isDragging ? 'grabbing' : 'pointer', touchAction: 'none' }}
+        >
           <defs>
             {/* Gradient for area fill */}
             <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -133,7 +207,7 @@ export function PopulationTrendChart({ data, scenarios, selectedYear }) {
             />
           ))}
 
-          {/* Observed/Projected divider at lastObservedYear */}
+          {/* Observed/Projected divider at 2025 - NO LABEL to avoid overlap */}
           <line
             x1={transitionX}
             y1={padding.top}
@@ -141,14 +215,6 @@ export function PopulationTrendChart({ data, scenarios, selectedYear }) {
             y2={padding.top + chartHeight}
             className="divider-line"
           />
-          <text
-            x={transitionX}
-            y={padding.top - 5}
-            className="divider-label"
-            textAnchor="middle"
-          >
-            2025
-          </text>
 
           {/* Area fill */}
           <path
@@ -179,17 +245,20 @@ export function PopulationTrendChart({ data, scenarios, selectedYear }) {
                 y2={padding.top + chartHeight}
                 className="current-year-line"
               />
+              {/* Draggable circle */}
               <circle
                 cx={currentPoint.x}
                 cy={currentPoint.y}
-                r="6"
-                className="current-year-point"
+                r="8"
+                className="current-year-point-outer"
+                style={{ cursor: 'grab' }}
               />
               <circle
                 cx={currentPoint.x}
                 cy={currentPoint.y}
-                r="4"
+                r="5"
                 fill="white"
+                style={{ pointerEvents: 'none' }}
               />
               {/* Year label at TOP of the line to avoid x-axis interference */}
               <text
@@ -197,6 +266,7 @@ export function PopulationTrendChart({ data, scenarios, selectedYear }) {
                 y={padding.top - 10}
                 className="current-year-label"
                 textAnchor="middle"
+                style={{ pointerEvents: 'none' }}
               >
                 {selectedYear}
               </text>

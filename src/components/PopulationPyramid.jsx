@@ -66,7 +66,7 @@ export function PopulationPyramid() {
       <h1>Canada Population Growth Model, 2025-2100</h1>
       
       {/* Population Trend Chart - MOVED TO TOP */}
-      <PopulationTrendChart data={data} scenarios={scenarios} selectedYear={selectedYear} />
+      <PopulationTrendChart data={data} scenarios={scenarios} selectedYear={selectedYear} onYearChange={setSelectedYear} />
 
       {/* Year Selector */}
       <div className="controls">
