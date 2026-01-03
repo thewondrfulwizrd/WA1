@@ -42,28 +42,41 @@ export function PopulationPyramid() {
     computePopulation();
   }, [data, scenarios, selectedYear]);
 
-  // Calculate baseline mortality separately when year or population changes
-  // Use the current population with 0% mortality adjustment to get baseline
+  // Calculate baseline mortality for the selected year (with 0% scenarios)
+  // This should update when the year changes, showing the natural mortality
+  // rate for that year's age structure
   useEffect(() => {
     async function computeBaselineMortality() {
-      if (!population.male.length || !population.female.length) return;
+      if (!data) return;
       
       try {
-        // Calculate what the mortality rate would be with 0% adjustment
+        // Get population for this year with NO scenario adjustments
+        const baselinePop = await applyScenarios(
+          data, 
+          { fertility: 0, mortality: 0, migration: 0 },  // 0% scenarios
+          selectedYear
+        );
+        
+        if (!baselinePop || !baselinePop.male.length) {
+          console.warn('Could not calculate baseline population');
+          return;
+        }
+        
+        // Calculate mortality rate for this baseline population
         const baseline = await calculateGlobalMortalityRate(
-          population,
-          { fertility: 0, mortality: 0, migration: 0 }
+          baselinePop,
+          { fertility: 0, mortality: 0, migration: 0 }  // 0% adjustment
         );
         
         setBaselineMortality(baseline);
-        console.log(`Baseline mortality for ${selectedYear}: ${baseline.toFixed(2)} per 1000`);
+        console.log(`✓ Baseline mortality for ${selectedYear}: ${baseline.toFixed(2)} per 1000`);
       } catch (err) {
         console.error('Error calculating baseline mortality:', err);
       }
     }
     
     computeBaselineMortality();
-  }, [selectedYear, population]);
+  }, [selectedYear, data]);  // Only when year or data changes, NOT scenarios
 
   if (loading) return <div>Loading population data...</div>;
   if (error) return <div>Error loading data: {error.message}</div>;
