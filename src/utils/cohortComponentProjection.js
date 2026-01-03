@@ -30,11 +30,11 @@ export async function projectOneYear(currentPopulation, scenarios, data) {
   const mortalityRates = getMortalityRates();
   const migrationDist = getMigrationDistribution();
 
-  const baseMaleRates = mortalityRates.male;
-  const baseFemaleRates = mortalityRates.female;
+  const baseMaleRates = mortalityRates.male;      // Already in per-1000 format
+  const baseFemaleRates = mortalityRates.female;  // Already in per-1000 format
 
   // Constants for demographic model
-  const BASELINE_ANNUAL_BIRTHS = 369000; // Actual 2025 births from Statistics Canada
+  const BASELINE_ANNUAL_BIRTHS = 330000; // Actual 2024/2025 births (Statistics Canada)
   const BASELINE_NET_MIGRATION = 400000; // Annual net migration
 
   // Scenario adjustments
@@ -50,10 +50,11 @@ export async function projectOneYear(currentPopulation, scenarios, data) {
 
   // Age cohorts forward (except 0-4 which are births)
   for (let i = 20; i > 0; i--) {
-    // Apply survival rate: (1 - adjusted mortality rate)
-    const baseMortalityRate = baseMaleRates[i - 1] / 1000; // Convert to proportion
-    const adjustedMortalityRate = baseMortalityRate * mortalityMultiplier;
-    const survivalRate = Math.max(0, Math.min(1, 1 - adjustedMortalityRate));
+    // Mortality rate is already per-1000, convert to proportion
+    const baseMortalityRatePer1000 = baseMaleRates[i - 1]; // e.g., 8.5 per 1000
+    const adjustedMortalityRatePer1000 = baseMortalityRatePer1000 * mortalityMultiplier;
+    const mortalityProportion = adjustedMortalityRatePer1000 / 1000; // Convert to 0-1 proportion
+    const survivalRate = Math.max(0, Math.min(1, 1 - mortalityProportion));
 
     projectedMale[i] = Math.round(currentPopulation.male[i - 1] * survivalRate);
   }
@@ -62,16 +63,16 @@ export async function projectOneYear(currentPopulation, scenarios, data) {
   const projectedFemale = new Array(21).fill(0);
 
   for (let i = 20; i > 0; i--) {
-    const baseMortalityRate = baseFemaleRates[i - 1] / 1000;
-    const adjustedMortalityRate = baseMortalityRate * mortalityMultiplier;
-    const survivalRate = Math.max(0, Math.min(1, 1 - adjustedMortalityRate));
+    const baseMortalityRatePer1000 = baseFemaleRates[i - 1];
+    const adjustedMortalityRatePer1000 = baseMortalityRatePer1000 * mortalityMultiplier;
+    const mortalityProportion = adjustedMortalityRatePer1000 / 1000;
+    const survivalRate = Math.max(0, Math.min(1, 1 - mortalityProportion));
 
     projectedFemale[i] = Math.round(currentPopulation.female[i - 1] * survivalRate);
   }
 
   // BIRTHS (ages 0-4 cohort)
   // Use baseline births adjusted by fertility scenario
-  // This is much more accurate than calculating from TFR
   const births = Math.round(BASELINE_ANNUAL_BIRTHS * fertilityMultiplier);
 
   // Split births 51% female, 49% male (standard demographic assumption)
@@ -97,7 +98,7 @@ export async function projectOneYear(currentPopulation, scenarios, data) {
     _components: {
       births,
       adjustedNetMigration,
-      adjustedMortalityRate: baseMaleRates[15] * mortalityMultiplier // sample rate for display
+      adjustedMortalityRate: (baseMaleRates[15] * mortalityMultiplier) / 1000 // sample rate for display
     }
   };
 }
@@ -161,11 +162,15 @@ export async function calculateGlobalMortalityRate(population, scenarios) {
     const malePop = population.male[i];
     const femalePop = population.female[i];
 
-    const baseMaleMortality = (mortalityRates.male[i] / 1000) * mortalityMultiplier;
-    const baseFemaleMortality = (mortalityRates.female[i] / 1000) * mortalityMultiplier;
+    // Mortality rates already per-1000
+    const baseMaleMortalityPer1000 = (mortalityRates.male[i] || 8.0) * mortalityMultiplier;
+    const baseFemaleMortalityPer1000 = (mortalityRates.female[i] || 8.0) * mortalityMultiplier;
 
-    totalDeaths += Math.round(malePop * baseMaleMortality);
-    totalDeaths += Math.round(femalePop * baseFemaleMortality);
+    const maleMortalityProp = baseMaleMortalityPer1000 / 1000;
+    const femaleMortalityProp = baseFemaleMortalityPer1000 / 1000;
+
+    totalDeaths += Math.round(malePop * maleMortalityProp);
+    totalDeaths += Math.round(femalePop * femaleMortalityProp);
 
     totalPopulation += malePop + femalePop;
   }
