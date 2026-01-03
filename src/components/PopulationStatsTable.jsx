@@ -69,15 +69,25 @@ export function PopulationStatsTable({ data, scenarios, selectedYear }) {
         // Use actual historical data from Statistics Canada
         births = historicalBirths[year] || 0;
         
-        // Deaths: use actual data if available, otherwise infer from 2023 mortality rates
+        // Deaths: use actual data if available, otherwise infer from mortality rates
         if (historicalDeaths[year]) {
           deaths = historicalDeaths[year];
         } else if (year === 2024 || year === 2025) {
-          // Infer 2024-2025 deaths using 2023 mortality rate
-          const mortality2023 = historicalMortality[2023] || 0;
-          if (mortality2023 > 0) {
+          // Try to infer from available mortality data
+          // For 2024: use 2024 mortality rate if available, else 2023
+          // For 2025: use 2024 mortality rate if available, else 2023
+          let mortRate = 0;
+          if (year === 2024 && historicalMortality[2024]) {
+            mortRate = historicalMortality[2024];
+          } else if (historicalMortality[2023]) {
+            mortRate = historicalMortality[2023];
+          } else if (historicalMortality[2024]) {
+            mortRate = historicalMortality[2024];
+          }
+          
+          if (mortRate > 0) {
             // mortality rate is per 1000
-            deaths = Math.round((total / 1000) * mortality2023);
+            deaths = Math.round((total / 1000) * mortRate);
           } else {
             deaths = 0;
           }
