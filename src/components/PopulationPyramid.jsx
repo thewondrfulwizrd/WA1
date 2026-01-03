@@ -57,9 +57,17 @@ export function PopulationPyramid() {
 
   return (
     <div className="population-pyramid">
-      {/* Canadian Flag Image */}
+      {/* Canadian Flag SVG */}
       <div className="canada-flag">
-        <img src="https://raw.githubusercontent.com/thewondrfulwizrd/WA1/main/public/canada-flag.png" alt="Canada Flag" />
+        <svg viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg">
+          <rect width="250" height="500" fill="#FF0000"/>
+          <rect x="250" width="500" height="500" fill="#FFFFFF"/>
+          <rect x="750" width="250" height="500" fill="#FF0000"/>
+          <g transform="translate(500, 250)">
+            <path d="M 0,-90 L -10,-40 L -50,-50 L -25,-25 L -30,10 L 0,-10 L 30,10 L 25,-25 L 50,-50 L 10,-40 Z" fill="#FF0000"/>
+            <rect x="-7" y="-10" width="14" height="80" fill="#FF0000"/>
+          </g>
+        </svg>
       </div>
       
       <h1>Canada Population Growth Model, 2025-2100</h1>
