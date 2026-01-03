@@ -16,6 +16,10 @@ export function ScenarioControls({ scenarios, onScenarioChange, onReset, isHisto
   // Use passed-in baseline mortality (calculated from actual year data)
   // Default to 7.5 if not provided (fallback to approximate Canada average)
   const displayedBaselineMortality = baselineMortality || 7.5;
+  
+  // Log what we're receiving and displaying
+  console.log('[ScenarioControls] baselineMortality prop:', baselineMortality);
+  console.log('[ScenarioControls] displayedBaselineMortality:', displayedBaselineMortality);
 
   // Calculate adjusted baseline figures
   const adjustedFertility = BASELINE_FERTILITY * (1 + scenarios.fertility / 100);
