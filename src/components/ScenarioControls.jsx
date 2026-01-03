@@ -8,8 +8,8 @@ const BASELINE_MIGRATION = 400000; // Net migration per year
 export function ScenarioControls({ scenarios, onScenarioChange, onReset, isHistorical }) {
   // Calculate adjusted baseline figures
   const adjustedFertility = BASELINE_FERTILITY * (1 + scenarios.fertility / 100);
-  // MORTALITY IS INVERTED: negative slider value = lower mortality rate = better health
-  const adjustedMortality = BASELINE_MORTALITY * (1 - scenarios.mortality / 100);
+  // MORTALITY: Positive % = higher mortality rate (worse), Negative % = lower mortality rate (better)
+  const adjustedMortality = BASELINE_MORTALITY * (1 + scenarios.mortality / 100);
   const adjustedMigration = Math.round(BASELINE_MIGRATION * (1 + scenarios.migration / 100));
 
   return (
@@ -62,15 +62,15 @@ export function ScenarioControls({ scenarios, onScenarioChange, onReset, isHisto
           </div>
         </div>
 
-        {/* Mortality Rate Slider - INVERTED LOGIC */}
+        {/* Mortality Rate Slider */}
         <div className="scenario-item">
           <div className="scenario-label-row">
             <label>
               <span className="scenario-icon">🏥</span>
               Mortality Rate
             </label>
-            {/* INVERTED: Negative % = lower mortality = green/better */}
-            <span className={`scenario-value ${scenarios.mortality === 0 ? 'baseline' : scenarios.mortality < 0 ? 'decrease' : 'increase'}`}>
+            {/* Positive % = higher mortality (red/bad), Negative % = lower mortality (green/good) */}
+            <span className={`scenario-value ${scenarios.mortality === 0 ? 'baseline' : scenarios.mortality > 0 ? 'increase' : 'decrease'}`}>
               {scenarios.mortality > 0 ? '+' : ''}{scenarios.mortality}%
             </span>
           </div>
