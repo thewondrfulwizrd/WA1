@@ -64,11 +64,20 @@
   height: 8px;
   -webkit-appearance: none;
   appearance: none;
-  background: #ddd;
+  background: transparent;
   border-radius: 5px;
   outline: none;
 }
 
+/* WebKit (Chrome, Safari, Edge) track styling */
+.controls input[type="range"]::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 8px;
+  background: #ddd;
+  border-radius: 5px;
+}
+
+/* WebKit thumb styling */
 .controls input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
@@ -81,6 +90,16 @@
   margin-top: -6px; /* Centers 20px thumb on 8px track: (20-8)/2 = 6px */
 }
 
+/* Firefox track styling */
+.controls input[type="range"]::-moz-range-track {
+  width: 100%;
+  height: 8px;
+  background: #ddd;
+  border-radius: 5px;
+  border: none;
+}
+
+/* Firefox thumb styling */
 .controls input[type="range"]::-moz-range-thumb {
   width: 20px;
   height: 20px;
@@ -89,13 +108,6 @@
   border-radius: 50%;
   border: none;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-}
-
-/* Firefox track styling to help center */
-.controls input[type="range"]::-moz-range-track {
-  height: 8px;
-  background: #ddd;
-  border-radius: 5px;
 }
 
 .year-labels {
