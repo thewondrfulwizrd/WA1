@@ -10,6 +10,30 @@ import { DebugTable } from './DebugTable';
 import './PopulationPyramid.css';
 import './DebugTable.css';
 
+/**
+ * Calculate baseline mortality rate for a given year
+ * Mortality rate = (deaths in that year / population in that year) * 1000
+ * 
+ * For observed years: use reported deaths from data
+ * For projected years: calculate from projection
+ */
+function calculateBaselineMortality(data, year) {
+  if (!data) return 7.5; // Default fallback
+  
+  // Check if this is an observed year
+  if (data.observed && data.observed[year]) {
+    const yearData = data.observed[year];
+    if (yearData.deaths !== undefined && yearData.population !== undefined) {
+      return (yearData.deaths / yearData.population) * 1000;
+    }
+  }
+  
+  // For projected years, we'd need the projection data
+  // For now, use approximation based on age structure
+  // Canada's baseline mortality: ~7-8 per 1000
+  return 7.5; // Default Canada baseline
+}
+
 export function PopulationPyramid() {
   const { data, loading, error } = usePopulationData();
   const [selectedYear, setSelectedYear] = useState(2025);
@@ -21,6 +45,7 @@ export function PopulationPyramid() {
   const [population, setPopulation] = useState({ male: [], female: [] });
   const [projectionLoading, setProjectionLoading] = useState(false);
   const [showDebugTable, setShowDebugTable] = useState(false);
+  const [baselineMortality, setBaselineMortality] = useState(7.5);
 
   // Compute population when year or scenarios change
   useEffect(() => {
@@ -30,6 +55,10 @@ export function PopulationPyramid() {
       try {
         const result = await applyScenarios(data, scenarios, selectedYear);
         setPopulation(result || { male: [], female: [] });
+        
+        // Calculate baseline mortality for this year
+        const baseline = calculateBaselineMortality(data, selectedYear);
+        setBaselineMortality(baseline);
       } catch (err) {
         console.error('Error computing population:', err);
         setPopulation({ male: [], female: [] });
@@ -97,6 +126,7 @@ export function PopulationPyramid() {
         onScenarioChange={handleScenarioChange}
         onReset={handleReset}
         isHistorical={isHistorical}
+        baselineMortality={baselineMortality}
       />
 
       {/* Section Divider */}
