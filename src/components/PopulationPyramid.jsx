@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePopulationData } from '../hooks/usePopulationData';
 import { getYearType, formatPopulation } from '../utils/populationHelpers';
 import { applyScenarios } from '../utils/scenarioCalculations';
@@ -16,14 +16,31 @@ export function PopulationPyramid() {
     mortality: 0,
     migration: 0
   });
+  const [population, setPopulation] = useState({ male: [], female: [] });
+  const [projectionLoading, setProjectionLoading] = useState(false);
+
+  // Compute population when year or scenarios change
+  useEffect(() => {
+    async function computePopulation() {
+      if (!data) return;
+      setProjectionLoading(true);
+      try {
+        const result = await applyScenarios(data, scenarios, selectedYear);
+        setPopulation(result || { male: [], female: [] });
+      } catch (err) {
+        console.error('Error computing population:', err);
+        setPopulation({ male: [], female: [] });
+      } finally {
+        setProjectionLoading(false);
+      }
+    }
+    computePopulation();
+  }, [data, scenarios, selectedYear]);
 
   if (loading) return <div>Loading population data...</div>;
   if (error) return <div>Error loading data: {error.message}</div>;
   if (!data) return null;
 
-  // Get population data with scenario adjustments
-  const population = applyScenarios(data, scenarios, selectedYear);
-  
   // Calculate totals from adjusted population
   const totals = {
     male: population.male.reduce((sum, val) => sum + val, 0),
@@ -37,7 +54,8 @@ export function PopulationPyramid() {
 
   const maxPop = Math.max(
     ...population.male,
-    ...population.female
+    ...population.female,
+    1 // Prevent max from being 0
   );
 
   const handleScenarioChange = (type, value) => {
@@ -104,41 +122,45 @@ export function PopulationPyramid() {
 
         {/* Pyramid Chart */}
         <div className="pyramid-chart">
-          {[...ages].reverse().map((ageGroup, reversedIndex) => {
-            const index = ages.length - 1 - reversedIndex;
-            const malePop = population.male[index];
-            const femalePop = population.female[index];
-            const malePercent = (malePop / maxPop) * 100;
-            const femalePercent = (femalePop / maxPop) * 100;
+          {population.male && population.male.length > 0 ? (
+            [...ages].reverse().map((ageGroup, reversedIndex) => {
+              const index = ages.length - 1 - reversedIndex;
+              const malePop = population.male[index] || 0;
+              const femalePop = population.female[index] || 0;
+              const malePercent = (malePop / maxPop) * 100;
+              const femalePercent = (femalePop / maxPop) * 100;
 
-            return (
-              <div key={ageGroup} className="pyramid-row">
-                <div className="male-container">
-                  <span className="pop-value male-value">{formatPopulation(malePop)}</span>
-                  <div className="bar-wrapper male-wrapper">
-                    <div 
-                      className="bar male-bar"
-                      style={{ width: `${malePercent}%` }}
-                      title={`Males ${ageGroup}: ${malePop.toLocaleString()}`}
-                    />
+              return (
+                <div key={ageGroup} className="pyramid-row">
+                  <div className="male-container">
+                    <span className="pop-value male-value">{formatPopulation(malePop)}</span>
+                    <div className="bar-wrapper male-wrapper">
+                      <div 
+                        className="bar male-bar"
+                        style={{ width: `${malePercent}%` }}
+                        title={`Males ${ageGroup}: ${malePop.toLocaleString()}`}
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="age-label">{ageGroup}</div>
+                  
+                  <div className="female-container">
+                    <div className="bar-wrapper female-wrapper">
+                      <div 
+                        className="bar female-bar"
+                        style={{ width: `${femalePercent}%` }}
+                        title={`Females ${ageGroup}: ${femalePop.toLocaleString()}`}
+                      />
+                    </div>
+                    <span className="pop-value female-value">{formatPopulation(femalePop)}</span>
                   </div>
                 </div>
-                
-                <div className="age-label">{ageGroup}</div>
-                
-                <div className="female-container">
-                  <div className="bar-wrapper female-wrapper">
-                    <div 
-                      className="bar female-bar"
-                      style={{ width: `${femalePercent}%` }}
-                      title={`Females ${ageGroup}: ${femalePop.toLocaleString()}`}
-                    />
-                  </div>
-                  <span className="pop-value female-value">{formatPopulation(femalePop)}</span>
-                </div>
-              </div>
-            );
-          })}
+              );
+            })
+          ) : (
+            <div>Loading pyramid...</div>
+          )}
         </div>
       </div>
 
