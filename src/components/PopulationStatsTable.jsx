@@ -60,7 +60,7 @@ export function PopulationStatsTable({ data, scenarios, selectedYear }) {
 
   return (
     <div className="population-stats-table-container">
-      <h2 className="section-heading">📊 Demographic Statistics</h2>
+      <h2 className="section-heading">📊 Components of Population Growth</h2>
       <div className="table-description">
         Showing data for every year from {data.yearsObserved[0]} to {data.lastProjectedYear}. 
         Historical data ({data.yearsObserved[0]}-{data.lastObservedYear}) uses actual Statistics Canada figures. 
@@ -83,33 +83,45 @@ export function PopulationStatsTable({ data, scenarios, selectedYear }) {
           </thead>
           <tbody>
             {tableData.map((row) => (
-              <tr key={row.year} className={`${row.year === selectedYear ? 'highlighted' : ''} ${row.year <= data.lastObservedYear ? 'historical' : 'projected'}`}>
-                <td className="year-cell">
-                  <span className="year-value">{row.year}</span>
-                  {row.year === selectedYear && <span className="current-badge">◄ Current</span>}
-                </td>
-                <td className="number-cell population-cell">
-                  {(row.population / 1000000).toFixed(2)}M
-                </td>
-                <td className={`number-cell growth-cell ${row.nominalGrowth >= 0 ? 'positive' : 'negative'}`}>
-                  {row.nominalGrowth > 0 ? '+' : ''}{(row.nominalGrowth / 1000).toFixed(0)}K
-                </td>
-                <td className={`number-cell growth-cell ${row.percentGrowth >= 0 ? 'positive' : 'negative'}`}>
-                  {row.percentGrowth > 0 ? '+' : ''}{row.percentGrowth.toFixed(2)}%
-                </td>
-                <td className="number-cell">
-                  {(row.births / 1000).toFixed(0)}K
-                </td>
-                <td className="number-cell">
-                  {(row.deaths / 1000).toFixed(0)}K
-                </td>
-                <td className={`number-cell ${row.naturalIncrease >= 0 ? 'positive' : 'negative'}`}>
-                  {row.naturalIncrease > 0 ? '+' : ''}{(row.naturalIncrease / 1000).toFixed(0)}K
-                </td>
-                <td className="number-cell migration-cell">
-                  {row.netMigration > 0 ? '+' : ''}{(row.netMigration / 1000).toFixed(0)}K
-                </td>
-              </tr>
+              <React.Fragment key={row.year}>
+                <tr className={`${row.year === selectedYear ? 'highlighted' : ''} ${row.year <= data.lastObservedYear ? 'historical' : 'projected'}`}>
+                  <td className="year-cell">
+                    <span className="year-value">{row.year}</span>
+                    {row.year === selectedYear && <span className="current-badge">◄ Current</span>}
+                  </td>
+                  <td className="number-cell population-cell">
+                    {(row.population / 1000000).toFixed(2)}M
+                  </td>
+                  <td className={`number-cell growth-cell ${row.nominalGrowth >= 0 ? 'positive' : 'negative'}`}>
+                    {row.nominalGrowth > 0 ? '+' : ''}{(row.nominalGrowth / 1000).toFixed(0)}K
+                  </td>
+                  <td className={`number-cell growth-cell ${row.percentGrowth >= 0 ? 'positive' : 'negative'}`}>
+                    {row.percentGrowth > 0 ? '+' : ''}{row.percentGrowth.toFixed(2)}%
+                  </td>
+                  <td className="number-cell">
+                    {(row.births / 1000).toFixed(0)}K
+                  </td>
+                  <td className="number-cell">
+                    {(row.deaths / 1000).toFixed(0)}K
+                  </td>
+                  <td className={`number-cell ${row.naturalIncrease >= 0 ? 'positive' : 'negative'}`}>
+                    {row.naturalIncrease > 0 ? '+' : ''}{(row.naturalIncrease / 1000).toFixed(0)}K
+                  </td>
+                  <td className="number-cell migration-cell">
+                    {row.netMigration > 0 ? '+' : ''}{(row.netMigration / 1000).toFixed(0)}K
+                  </td>
+                </tr>
+                {/* Add demarcation line between 2025 and 2026 */}
+                {row.year === 2025 && (
+                  <tr className="demarcation-row">
+                    <td colSpan="8">
+                      <div className="demarcation-line">
+                        <span className="demarcation-label">Historical Data Ends / Projections Begin</span>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
             ))}
           </tbody>
         </table>
