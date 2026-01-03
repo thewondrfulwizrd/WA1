@@ -44,9 +44,12 @@ export function PopulationTrendChart({ data, scenarios, selectedYear }) {
   // Create area fill path
   const areaPath = `M ${padding.left},${padding.top + chartHeight} L ${points.map(p => `${p.x},${p.y}`).join(' L ')} L ${padding.left + chartWidth},${padding.top + chartHeight} Z`;
 
-  // Find the transition point between observed and projected
-  const transitionIndex = chartData.findIndex(d => d.year === data.lastObservedYear);
+  // Find the transition point between observed and projected (year 2025)
+  const transitionIndex = chartData.findIndex(d => d.year === 2025);
   const transitionX = padding.left + (transitionIndex / (chartData.length - 1)) * chartWidth;
+  
+  // Calculate gradient percentage - relative to the actual chart area
+  const gradientTransitionPercent = ((transitionX - padding.left) / chartWidth) * 100;
 
   // Highlight current year
   const currentIndex = chartData.findIndex(d => d.year === selectedYear);
@@ -96,11 +99,11 @@ export function PopulationTrendChart({ data, scenarios, selectedYear }) {
               <stop offset="100%" stopColor="#1976d2" stopOpacity="0.05" />
             </linearGradient>
             
-            {/* Gradient for the line */}
+            {/* Gradient for the line - transitions at 2025, not lastObservedYear */}
             <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#1976d2" />
-              <stop offset={`${(transitionX / width) * 100}%`} stopColor="#1976d2" />
-              <stop offset={`${(transitionX / width) * 100}%`} stopColor="#7b1fa2" />
+              <stop offset={`${gradientTransitionPercent}%`} stopColor="#1976d2" />
+              <stop offset={`${gradientTransitionPercent}%`} stopColor="#7b1fa2" />
               <stop offset="100%" stopColor="#7b1fa2" />
             </linearGradient>
             
@@ -130,7 +133,7 @@ export function PopulationTrendChart({ data, scenarios, selectedYear }) {
             />
           ))}
 
-          {/* Observed/Projected divider */}
+          {/* Observed/Projected divider at lastObservedYear */}
           <line
             x1={transitionX}
             y1={padding.top}
@@ -144,7 +147,7 @@ export function PopulationTrendChart({ data, scenarios, selectedYear }) {
             className="divider-label"
             textAnchor="middle"
           >
-            {data.lastObservedYear}
+            2025
           </text>
 
           {/* Area fill */}
@@ -188,12 +191,12 @@ export function PopulationTrendChart({ data, scenarios, selectedYear }) {
                 r="4"
                 fill="white"
               />
-              {/* Year label beside the line on the chart */}
+              {/* Year label at TOP of the line to avoid x-axis interference */}
               <text
-                x={currentPoint.x + 10}
-                y={padding.top + chartHeight + 20}
+                x={currentPoint.x}
+                y={padding.top - 10}
                 className="current-year-label"
-                textAnchor="start"
+                textAnchor="middle"
               >
                 {selectedYear}
               </text>
