@@ -1,15 +1,21 @@
 import { getPopulationByYear, getYearType } from './populationHelpers';
+import { projectToYear, calculateGlobalMortalityRate, clearProjectionCache } from './cohortComponentProjection';
 
 /**
- * Apply scenario adjustments to population data
- * Scenarios represent percentage changes from baseline projections
+ * Apply scenario adjustments to population data using cohort-component model
+ * 
+ * For observed years (≤2025): Returns actual data
+ * For projected years (≥2026): Uses cohort-component projection with:
+ *   - Age-specific mortality rates from 2023 baseline
+ *   - Age-gender migration distributions from 2024/2025
+ *   - Fertility-driven births
  * 
  * @param {Object} data - Full dataset with observed and projected populations
  * @param {Object} scenarios - { fertility: number, mortality: number, migration: number }
  * @param {number} year - Year to apply scenarios to
  * @returns {Object} { male: Array, female: Array } - Adjusted population
  */
-export function applyScenarios(data, scenarios, year) {
+export async function applyScenarios(data, scenarios, year) {
   const yearType = getYearType(data, year);
   
   // Don't modify historical data
@@ -17,72 +23,15 @@ export function applyScenarios(data, scenarios, year) {
     return getPopulationByYear(data, year);
   }
 
-  // Get baseline population for this year
-  const baseline = getPopulationByYear(data, year);
-  if (!baseline) {
-    console.warn(`No baseline population data for year ${year}`);
+  // For projected years, use cohort-component model
+  const projected = await projectToYear(data, scenarios, year, 2025);
+  
+  if (!projected) {
+    console.warn(`Failed to project population for year ${year}`);
     return { male: [], female: [] };
   }
   
-  // All scenarios are percentage changes: -100 to +100+ range
-  // Convert to multipliers: 0% change = 1.0, +50% = 1.5, -50% = 0.5
-  const fertilityMultiplier = 1 + (scenarios.fertility / 100);
-  // MORTALITY IS INVERTED: negative value = lower mortality = better survival = more population
-  const mortalityMultiplier = 1 - (scenarios.mortality / 100);
-  const migrationMultiplier = 1 + (scenarios.migration / 100);
-  
-  // Age group indices for scenario effects
-  // Based on 21 age groups: 0=0-4, 1=5-9, ..., 20=100+
-  const ageGroupCount = baseline.male.length;
-  
-  const adjustedMale = baseline.male.map((pop, ageIndex) => {
-    let adjusted = pop;
-    
-    // FERTILITY: affects births (0-4 age group, index 0)
-    // Children born in projection reflect TFR changes
-    if (ageIndex === 0) {
-      adjusted *= fertilityMultiplier;
-    }
-    
-    // MORTALITY: affects survival rates, mainly impacts older population (65+)
-    // Negative mortality % = lower death rate = more elderly survive
-    // Age 13-20 are roughly 65+
-    if (ageIndex >= 13) {
-      adjusted *= mortalityMultiplier;
-    }
-    
-    // MIGRATION: affects working-age population (20-64 years)
-    // Age 4-12 correspond to ages 20-64
-    if (ageIndex >= 4 && ageIndex <= 12) {
-      adjusted *= migrationMultiplier;
-    }
-    
-    return Math.max(0, Math.round(adjusted));
-  });
-  
-  const adjustedFemale = baseline.female.map((pop, ageIndex) => {
-    let adjusted = pop;
-    
-    // Same logic as males
-    if (ageIndex === 0) {
-      adjusted *= fertilityMultiplier;
-    }
-    
-    if (ageIndex >= 13) {
-      adjusted *= mortalityMultiplier;
-    }
-    
-    if (ageIndex >= 4 && ageIndex <= 12) {
-      adjusted *= migrationMultiplier;
-    }
-    
-    return Math.max(0, Math.round(adjusted));
-  });
-  
-  return {
-    male: adjustedMale,
-    female: adjustedFemale
-  };
+  return projected;
 }
 
 /**
@@ -94,11 +43,11 @@ export function applyScenarios(data, scenarios, year) {
  * @param {number} year - Year to analyze
  * @returns {Object} Impact analysis
  */
-export function analyzeScenarioImpact(data, scenarios, year) {
+export async function analyzeScenarioImpact(data, scenarios, year) {
   const baseline = getPopulationByYear(data, year);
-  const adjusted = applyScenarios(data, scenarios, year);
+  const adjusted = await applyScenarios(data, scenarios, year);
   
-  if (!baseline) return null;
+  if (!baseline || !adjusted) return null;
   
   const baselineMale = baseline.male.reduce((sum, v) => sum + v, 0);
   const baselineFemale = baseline.female.reduce((sum, v) => sum + v, 0);
@@ -117,4 +66,21 @@ export function analyzeScenarioImpact(data, scenarios, year) {
     difference: diff,
     percentChange: pctChange.toFixed(2)
   };
+}
+
+/**
+ * Get the global mortality rate for current scenario
+ * @param {Object} population - Current population by age/gender
+ * @param {Object} scenarios - Scenario parameters
+ * @returns {number} Mortality rate per 1000 population
+ */
+export async function getGlobalMortalityRate(population, scenarios) {
+  return await calculateGlobalMortalityRate(population, scenarios);
+}
+
+/**
+ * Clear cached projections when scenarios change
+ */
+export function onScenariosChanged() {
+  clearProjectionCache();
 }
