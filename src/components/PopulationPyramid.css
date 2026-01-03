@@ -61,7 +61,7 @@
   margin: 8px auto;
   display: block;
   cursor: pointer;
-  height: 6px;
+  height: 8px;
   -webkit-appearance: none;
   appearance: none;
   background: #ddd;
@@ -72,19 +72,18 @@
 .controls input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   background: #1976d2;
   cursor: pointer;
   border-radius: 50%;
   box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  margin-top: -6px; /* Vertically center the 18px thumb on the 6px track */
-  position: relative;
+  margin-top: -6px; /* Centers 20px thumb on 8px track: (20-8)/2 = 6px */
 }
 
 .controls input[type="range"]::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   background: #1976d2;
   cursor: pointer;
   border-radius: 50%;
@@ -94,7 +93,7 @@
 
 /* Firefox track styling to help center */
 .controls input[type="range"]::-moz-range-track {
-  height: 6px;
+  height: 8px;
   background: #ddd;
   border-radius: 5px;
 }
