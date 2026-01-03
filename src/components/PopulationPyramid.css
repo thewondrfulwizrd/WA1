@@ -2,7 +2,7 @@
   max-width: 1600px;
   width: 95%;
   margin: 0 auto;
-  padding: var(--space-24) 15px 15px;
+  padding: 0 15px 15px; /* REDUCED: removed top padding (was 24px) to save 24px */
 }
 
 /* Canadian Flag */
@@ -10,13 +10,14 @@
   display: flex;
   justify-content: center;
   margin-bottom: var(--space-16);
-  padding-top: var(--space-16);
+  padding-top: 0; /* REDUCED: removed padding-top (was 16px) to save 16px. Total saved: 40px */
 }
 
-.canada-flag svg {
+.canada-flag img {
   width: 100px;
   height: 50px;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  object-fit: contain;
 }
 
 .population-pyramid h1 {
@@ -367,7 +368,7 @@
     padding-right: 20px;
   }
   
-  .canada-flag svg {
+  .canada-flag img {
     width: 80px;
     height: 40px;
   }
