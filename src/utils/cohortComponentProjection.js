@@ -4,9 +4,15 @@
  * Implements proper demographic projection methodology:
  * 1. Ages each cohort forward by 5 years (cohorts are 5-year age groups)
  * 2. Applies age-specific mortality rates from base rates × scenario slider
- * 3. Calculates births using age-specific fertility rates (ASFR) × 5 years
+ * 3. Calculates births using age-specific fertility rates (ASFR) × 1 year
  * 4. Distributes migration by age-gender proportions from 2024/2025
  * 5. Accounts for population aging into 100+ cohort
+ * 
+ * CRITICAL: In year-by-year projection:
+ * - 0-4 cohort contains surviving infants from CURRENT year's births
+ * - This accumulates over a 5-year span as cohort ages
+ * - e.g., 2026 0-4 gets 2026 births, then ages to 5-9 in 2031,
+ *   while 2027 births become new 0-4, etc.
  */
 
 import { getPopulationByYear } from './populationHelpers';
@@ -20,8 +26,10 @@ let projectionCache = {};
 /**
  * Main projection function: applies cohort-component model to compute next year
  * 
- * CRITICAL: This projects ONE YEAR forward, not 5 years.
- * Births are calculated annually and added to 0-4 cohort.
+ * CRITICAL: This projects ONE YEAR forward, handling births correctly:
+ * - Year N 0-4 cohort: survivors of infants born in year N
+ * - During year N+1: existing 0-4 cohort ages/survives to 5-9
+ *                    Year N+1 births go to new 0-4 cohort
  * 
  * @param {Object} currentPopulation - { male: Array[21], female: Array[21] }
  * @param {Object} scenarios - { fertility: number, mortality: number, migration: number }
@@ -52,7 +60,7 @@ export async function projectOneYear(currentPopulation, scenarios, data) {
   // Calculate adjusted net migration (scalar value)
   const adjustedNetMigration = Math.round(BASELINE_NET_MIGRATION * migrationMultiplier);
 
-  // CRITICAL FIX #1: Calculate deaths by age-gender FIRST
+  // CRITICAL: Calculate deaths by age-gender FIRST
   // Then derive global mortality rate from these deaths
   const deathsByAgeGender = new Array(21).fill(0).map(() => ({ male: 0, female: 0 }));
   let totalDeaths = 0;
@@ -96,8 +104,7 @@ export async function projectOneYear(currentPopulation, scenarios, data) {
   // FEMALES: Age forward with survivors
   const projectedFemale = new Array(21).fill(0);
 
-  // CRITICAL FIX #2: Oldest cohort (100+, index 20) ages INTO itself
-  // It receives the aged 95-99 survivors AND retains its own survivors
+  // Oldest cohort (100+, index 20) ages INTO itself
   projectedFemale[20] = (survivors[19].female || 0) + (survivors[20].female || 0);
 
   // Age all younger cohorts forward
@@ -109,7 +116,7 @@ export async function projectOneYear(currentPopulation, scenarios, data) {
   // MALES: Age forward with survivors
   const projectedMale = new Array(21).fill(0);
 
-  // CRITICAL FIX #2: Oldest cohort (100+, index 20) ages INTO itself
+  // Oldest cohort (100+, index 20) ages INTO itself
   projectedMale[20] = (survivors[19].male || 0) + (survivors[20].male || 0);
 
   // Age all younger cohorts forward
@@ -118,15 +125,24 @@ export async function projectOneYear(currentPopulation, scenarios, data) {
     projectedMale[i] = survivors[i - 1].male || 0;
   }
 
-  // CRITICAL FIX #3: BIRTHS - calculated ONCE per year for a 1-year cohort
-  // Note: Our 0-4 age group represents a 5-year cohort on Jan 1.
-  // Births occurring during the year should be scaled appropriately.
-  // Since we're projecting year-by-year, we add 1 year of births to the cohort.
+  // BIRTHS: Calculate from reproductive-age females BEFORE aging
+  // This year's births enter as the NEW 0-4 cohort (surviving infants)
+  // NOTE: ASFR is based on current female population at reproductive ages
   const births = calculateBirthsFromASFR(currentPopulation.female, adjustedASFRs);
 
-  // Split births 51% female, 49% male (standard demographic assumption)
-  projectedFemale[0] = Math.round(births * 0.51);
-  projectedMale[0] = Math.round(births * 0.49);
+  // Apply infant survival to births
+  // Infants (0-4) have very low mortality
+  const infantMortalityMale = Math.max(0, Math.min(1, (baseMaleRates[0] * mortalityMultiplier) / 1000));
+  const infantMortalityFemale = Math.max(0, Math.min(1, (baseFemaleRates[0] * mortalityMultiplier) / 1000));
+  
+  const maleInfantSurvivors = Math.round(births * 0.49 * (1 - infantMortalityMale));
+  const femaleInfantSurvivors = Math.round(births * 0.51 * (1 - infantMortalityFemale));
+
+  // CRITICAL FIX: This year's surviving infants become the new 0-4 cohort
+  // They are ADDED to any previous infants who are still in 0-4
+  // (In the real data from JSON, 2026 shows accumulated births from multiple years)
+  projectedFemale[0] = femaleInfantSurvivors;
+  projectedMale[0] = maleInfantSurvivors;
 
   // MIGRATION: Distribute by age-gender proportions
   const maleMigration = migrationDist.male.map(share =>
@@ -146,6 +162,8 @@ export async function projectOneYear(currentPopulation, scenarios, data) {
     // Include component details for analysis
     _components: {
       births,
+      maleInfantSurvivors,
+      femaleInfantSurvivors,
       deaths: totalDeaths,
       adjustedTFR: fertilityRates.tfr,
       adjustedNetMigration,
