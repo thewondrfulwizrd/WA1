@@ -24,17 +24,25 @@ export function DebugTable({ data, scenarios, visible }) {
         const baseNetMigration = 400000;
         const adjustedNetMigration = Math.round(baseNetMigration * migrationMultiplier);
 
-        const years = [2026, 2027, 2028, 2029, 2030];
+        const years = [2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029, 2030, 2031, 2032, 2033, 2034, 2035];
         const breakdown = [];
+        const populationByYear = {}; // Store populations for calculating annual change
 
         for (const year of years) {
           const population = await applyScenarios(data, scenarios, year);
           if (!population) continue;
 
+          // Store population data for this year
+          populationByYear[year] = {
+            cohorts: [],
+            total: 0
+          };
+
           // Calculate totals
           const maleTotal = population.male.reduce((sum, val) => sum + val, 0);
           const femaleTotal = population.female.reduce((sum, val) => sum + val, 0);
           const total = maleTotal + femaleTotal;
+          populationByYear[year].total = total;
 
           // Calculate overall mortality rate and deaths
           let totalDeaths = 0;
@@ -49,6 +57,12 @@ export function DebugTable({ data, scenarios, visible }) {
           }
           const globalMortalityRate = total > 0 ? (totalDeaths / total) * 1000 : 0;
 
+          // Calculate annual change for "All ages"
+          const previousYear = year - 1;
+          const annualChange = populationByYear[previousYear] 
+            ? total - populationByYear[previousYear].total
+            : null; // null for first year
+
           // Add "All ages" row
           breakdown.push({
             year,
@@ -56,7 +70,8 @@ export function DebugTable({ data, scenarios, visible }) {
             population: total,
             mortalityRate: globalMortalityRate,
             deaths: totalDeaths,
-            netMigration: adjustedNetMigration
+            netMigration: adjustedNetMigration,
+            annualChange
           });
 
           // Add rows for each age group
@@ -64,6 +79,9 @@ export function DebugTable({ data, scenarios, visible }) {
             const malePop = population.male[i] || 0;
             const femalePop = population.female[i] || 0;
             const cohortPop = malePop + femalePop;
+
+            // Store cohort population
+            populationByYear[year].cohorts[i] = cohortPop;
 
             // Calculate average mortality rate for this cohort
             const maleMortalityRate = (mortalityRates.male[i] || 8.0) * mortalityMultiplier;
@@ -82,13 +100,19 @@ export function DebugTable({ data, scenarios, visible }) {
             const femaleMigration = Math.round(adjustedNetMigration * migrationDist.female[i]);
             const cohortMigration = maleMigration + femaleMigration;
 
+            // Calculate annual change for this cohort
+            const cohortAnnualChange = populationByYear[previousYear] && populationByYear[previousYear].cohorts[i] !== undefined
+              ? cohortPop - populationByYear[previousYear].cohorts[i]
+              : null; // null for first year
+
             breakdown.push({
               year,
               age: ageGroup,
               population: cohortPop,
               mortalityRate: avgMortalityRate,
               deaths: cohortDeaths,
-              netMigration: cohortMigration
+              netMigration: cohortMigration,
+              annualChange: cohortAnnualChange
             });
           });
         }
@@ -111,7 +135,7 @@ export function DebugTable({ data, scenarios, visible }) {
 
   return (
     <div className="debug-table-container">
-      <h2 className="debug-heading">🔍 Projection Breakdown (2026-2030)</h2>
+      <h2 className="debug-heading">🔍 Projection Breakdown (2020-2035)</h2>
       <div className="debug-table-wrapper">
         <table className="debug-table">
           <thead>
@@ -122,6 +146,7 @@ export function DebugTable({ data, scenarios, visible }) {
               <th>Mortality Rate</th>
               <th>Deaths</th>
               <th>Net Migration</th>
+              <th>Annual Change</th>
             </tr>
           </thead>
           <tbody>
@@ -133,6 +158,13 @@ export function DebugTable({ data, scenarios, visible }) {
                 <td className="number-cell">{row.mortalityRate.toFixed(row.age === 'All ages' ? 5 : 3)}</td>
                 <td className="number-cell">{row.deaths.toLocaleString()}</td>
                 <td className="number-cell">{row.netMigration.toLocaleString()}</td>
+                <td className="number-cell change-cell">
+                  {row.annualChange === null ? '—' : (
+                    <span className={row.annualChange >= 0 ? 'positive-change' : 'negative-change'}>
+                      {row.annualChange >= 0 ? '+' : ''}{row.annualChange.toLocaleString()}
+                    </span>
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>
