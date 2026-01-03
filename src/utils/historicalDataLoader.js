@@ -1,5 +1,10 @@
 /**
  * Load and parse historical data from CSV files
+ * 
+ * IMPORTANT: Fiscal years are shifted forward by 1 year because:
+ * - Population is measured as of July 1 each year
+ * - Fiscal year 2024/2025 (July 1, 2024 - June 30, 2025) leads to July 1, 2025 population
+ * - Therefore 2024/2025 → stored as year 2025
  */
 
 export async function loadHistoricalBirths() {
@@ -22,16 +27,17 @@ export async function loadHistoricalBirths() {
       if (isNaN(value)) return;
       
       // Extract year from fiscal year format (YYYY/YYYY)
-      // For fiscal years, store data for BOTH calendar years
+      // Fiscal year YYYY/YYYY+1 represents data for calendar year YYYY+1
       if (refDate.includes('/')) {
         const [startYear, endYear] = refDate.split('/').map(y => parseInt(y));
         
         // Only count "Total - gender" to avoid double-counting
+        // Store using END year (e.g., 2024/2025 → 2025)
         if (genderField === 'Total - gender') {
-          birthsByYear[startYear] = value;
-          birthsByYear[endYear] = value; // Also store for end year
+          birthsByYear[endYear] = value;
         }
       } else {
+        // Non-fiscal year format (shouldn't happen for births, but handle it)
         const year = parseInt(refDate);
         if (genderField === 'Total - gender') {
           birthsByYear[year] = value;
@@ -137,28 +143,27 @@ export async function loadHistoricalMigration() {
       // Only count "Total - gender" and "All ages" to get totals
       if (genderField !== 'Total - gender' || ageGroup !== 'All ages') return;
       
-      // Extract years from fiscal year format (YYYY/YYYY)
-      let years = [];
+      // Extract year from fiscal year format (YYYY/YYYY)
+      // Fiscal year YYYY/YYYY+1 represents data for calendar year YYYY+1
+      let year;
       if (refDate.includes('/')) {
         const [startYear, endYear] = refDate.split('/').map(y => parseInt(y));
-        years = [startYear, endYear]; // Store for BOTH years
+        year = endYear; // Use END year (e.g., 2024/2025 → 2025)
       } else {
-        years = [parseInt(refDate)];
+        year = parseInt(refDate);
       }
       
-      years.forEach(year => {
-        if (!immigrationByYear[year]) immigrationByYear[year] = 0;
-        if (!nonPermByYear[year]) nonPermByYear[year] = 0;
-        if (!emigrationByYear[year]) emigrationByYear[year] = 0;
-        
-        if (migrationType === 'Immigrants') {
-          immigrationByYear[year] += value;
-        } else if (migrationType === 'Net non-permanent residents') {
-          nonPermByYear[year] += value;
-        } else if (migrationType === 'Net emigration') {
-          emigrationByYear[year] += value;
-        }
-      });
+      if (!immigrationByYear[year]) immigrationByYear[year] = 0;
+      if (!nonPermByYear[year]) nonPermByYear[year] = 0;
+      if (!emigrationByYear[year]) emigrationByYear[year] = 0;
+      
+      if (migrationType === 'Immigrants') {
+        immigrationByYear[year] += value;
+      } else if (migrationType === 'Net non-permanent residents') {
+        nonPermByYear[year] += value;
+      } else if (migrationType === 'Net emigration') {
+        emigrationByYear[year] += value;
+      }
     });
     
     // Calculate net migration: Immigrants + Net non-permanent residents - Net emigration
