@@ -2,11 +2,30 @@ import React, { useState, useEffect } from 'react';
 import { applyScenarios } from '../utils/scenarioCalculations';
 import { getMortalityRates, loadMortalityRates } from '../utils/mortalityRates';
 import { getMigrationDistribution, loadMigrationDistribution } from '../utils/migrationDistribution';
+import { loadHistoricalMigration, loadHistoricalBirths, loadHistoricalDeaths } from '../utils/historicalDataLoader';
 import './DebugTable.css';
 
 export function DebugTable({ data, scenarios, visible }) {
   const [debugData, setDebugData] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [historicalMigration, setHistoricalMigration] = useState({});
+  const [historicalBirths, setHistoricalBirths] = useState({});
+  const [historicalDeaths, setHistoricalDeaths] = useState({});
+
+  // Load historical data
+  useEffect(() => {
+    async function loadHistoricalData() {
+      const [migration, births, deaths] = await Promise.all([
+        loadHistoricalMigration(),
+        loadHistoricalBirths(),
+        loadHistoricalDeaths()
+      ]);
+      setHistoricalMigration(migration);
+      setHistoricalBirths(births);
+      setHistoricalDeaths(deaths);
+    }
+    loadHistoricalData();
+  }, []);
 
   useEffect(() => {
     async function computeDebugData() {
@@ -32,6 +51,8 @@ export function DebugTable({ data, scenarios, visible }) {
           const population = await applyScenarios(data, scenarios, year);
           if (!population) continue;
 
+          const isHistorical = year <= data.lastObservedYear;
+
           // Store population data for this year
           populationByYear[year] = {
             cohorts: [],
@@ -44,17 +65,28 @@ export function DebugTable({ data, scenarios, visible }) {
           const total = maleTotal + femaleTotal;
           populationByYear[year].total = total;
 
-          // Calculate overall mortality rate and deaths
+          // Calculate deaths and net migration
           let totalDeaths = 0;
-          for (let i = 0; i < 21; i++) {
-            const malePop = population.male[i];
-            const femalePop = population.female[i];
-            const maleMortalityRate = (mortalityRates.male[i] || 8.0) * mortalityMultiplier;
-            const femaleMortalityRate = (mortalityRates.female[i] || 8.0) * mortalityMultiplier;
-            const maleDeaths = Math.round(malePop * maleMortalityRate / 1000);
-            const femaleDeaths = Math.round(femalePop * femaleMortalityRate / 1000);
-            totalDeaths += maleDeaths + femaleDeaths;
+          let totalNetMigration = 0;
+
+          if (isHistorical) {
+            // Use actual historical data
+            totalDeaths = historicalDeaths[year] || 0;
+            totalNetMigration = Math.round(historicalMigration[year] || 0);
+          } else {
+            // Calculate for projected years
+            for (let i = 0; i < 21; i++) {
+              const malePop = population.male[i];
+              const femalePop = population.female[i];
+              const maleMortalityRate = (mortalityRates.male[i] || 8.0) * mortalityMultiplier;
+              const femaleMortalityRate = (mortalityRates.female[i] || 8.0) * mortalityMultiplier;
+              const maleDeaths = Math.round(malePop * maleMortalityRate / 1000);
+              const femaleDeaths = Math.round(femalePop * femaleMortalityRate / 1000);
+              totalDeaths += maleDeaths + femaleDeaths;
+            }
+            totalNetMigration = adjustedNetMigration;
           }
+
           const globalMortalityRate = total > 0 ? (totalDeaths / total) * 1000 : 0;
 
           // Calculate annual change for "All ages"
@@ -70,8 +102,9 @@ export function DebugTable({ data, scenarios, visible }) {
             population: total,
             mortalityRate: globalMortalityRate,
             deaths: totalDeaths,
-            netMigration: adjustedNetMigration,
-            annualChange
+            netMigration: totalNetMigration,
+            annualChange,
+            isHistorical
           });
 
           // Add rows for each age group
@@ -83,22 +116,43 @@ export function DebugTable({ data, scenarios, visible }) {
             // Store cohort population
             populationByYear[year].cohorts[i] = cohortPop;
 
-            // Calculate average mortality rate for this cohort
-            const maleMortalityRate = (mortalityRates.male[i] || 8.0) * mortalityMultiplier;
-            const femaleMortalityRate = (mortalityRates.female[i] || 8.0) * mortalityMultiplier;
-            const avgMortalityRate = cohortPop > 0 
-              ? ((malePop * maleMortalityRate) + (femalePop * femaleMortalityRate)) / cohortPop
-              : (maleMortalityRate + femaleMortalityRate) / 2;
+            // Calculate mortality rate and deaths for this cohort
+            let cohortDeaths = 0;
+            let avgMortalityRate = 0;
 
-            // Calculate deaths for this cohort
-            const maleDeaths = Math.round(malePop * maleMortalityRate / 1000);
-            const femaleDeaths = Math.round(femalePop * femaleMortalityRate / 1000);
-            const cohortDeaths = maleDeaths + femaleDeaths;
+            if (isHistorical) {
+              // For historical years, we can't break down deaths by age group from aggregate data
+              // So we show proportional estimates based on mortality rates
+              const maleMortalityRate = mortalityRates.male[i] || 8.0;
+              const femaleMortalityRate = mortalityRates.female[i] || 8.0;
+              avgMortalityRate = cohortPop > 0 
+                ? ((malePop * maleMortalityRate) + (femalePop * femaleMortalityRate)) / cohortPop
+                : (maleMortalityRate + femaleMortalityRate) / 2;
+              cohortDeaths = Math.round(cohortPop * avgMortalityRate / 1000);
+            } else {
+              // For projected years, use adjusted rates
+              const maleMortalityRate = (mortalityRates.male[i] || 8.0) * mortalityMultiplier;
+              const femaleMortalityRate = (mortalityRates.female[i] || 8.0) * mortalityMultiplier;
+              avgMortalityRate = cohortPop > 0 
+                ? ((malePop * maleMortalityRate) + (femalePop * femaleMortalityRate)) / cohortPop
+                : (maleMortalityRate + femaleMortalityRate) / 2;
+              cohortDeaths = Math.round(cohortPop * avgMortalityRate / 1000);
+            }
 
             // Calculate net migration for this cohort
-            const maleMigration = Math.round(adjustedNetMigration * migrationDist.male[i]);
-            const femaleMigration = Math.round(adjustedNetMigration * migrationDist.female[i]);
-            const cohortMigration = maleMigration + femaleMigration;
+            let cohortMigration = 0;
+            if (isHistorical) {
+              // For historical years, distribute total migration by age-gender shares
+              const totalHistoricalMigration = historicalMigration[year] || 0;
+              const maleMigration = Math.round(totalHistoricalMigration * migrationDist.male[i]);
+              const femaleMigration = Math.round(totalHistoricalMigration * migrationDist.female[i]);
+              cohortMigration = maleMigration + femaleMigration;
+            } else {
+              // For projected years, use scenario-adjusted migration
+              const maleMigration = Math.round(adjustedNetMigration * migrationDist.male[i]);
+              const femaleMigration = Math.round(adjustedNetMigration * migrationDist.female[i]);
+              cohortMigration = maleMigration + femaleMigration;
+            }
 
             // Calculate annual change for this cohort
             const cohortAnnualChange = populationByYear[previousYear] && populationByYear[previousYear].cohorts[i] !== undefined
@@ -112,7 +166,8 @@ export function DebugTable({ data, scenarios, visible }) {
               mortalityRate: avgMortalityRate,
               deaths: cohortDeaths,
               netMigration: cohortMigration,
-              annualChange: cohortAnnualChange
+              annualChange: cohortAnnualChange,
+              isHistorical
             });
           });
         }
@@ -127,7 +182,7 @@ export function DebugTable({ data, scenarios, visible }) {
     }
 
     computeDebugData();
-  }, [visible, data, scenarios]);
+  }, [visible, data, scenarios, historicalMigration, historicalBirths, historicalDeaths]);
 
   if (!visible) return null;
   if (loading) return <div className="debug-table-container">Loading debug data...</div>;
@@ -136,6 +191,10 @@ export function DebugTable({ data, scenarios, visible }) {
   return (
     <div className="debug-table-container">
       <h2 className="debug-heading">🔍 Projection Breakdown (2020-2035)</h2>
+      <div className="table-description">
+        Historical years (2020-2025) use actual Statistics Canada data. 
+        Projected years (2026-2035) use scenario-adjusted calculations.
+      </div>
       <div className="debug-table-wrapper">
         <table className="debug-table">
           <thead>
@@ -151,7 +210,7 @@ export function DebugTable({ data, scenarios, visible }) {
           </thead>
           <tbody>
             {debugData.map((row, index) => (
-              <tr key={index} className={row.age === 'All ages' ? 'total-row' : ''}>
+              <tr key={index} className={`${row.age === 'All ages' ? 'total-row' : ''} ${row.isHistorical ? 'historical' : 'projected'}`}>
                 <td>{row.year}</td>
                 <td>{row.age}</td>
                 <td className="number-cell">{row.population.toLocaleString()}</td>
@@ -167,6 +226,16 @@ export function DebugTable({ data, scenarios, visible }) {
                 </td>
               </tr>
             ))}
+            {/* Add demarcation line between 2025 and 2026 */}
+            {debugData.find(row => row.year === 2025 && row.age === '100 years and older') && (
+              <tr className="demarcation-row">
+                <td colSpan="7">
+                  <div className="demarcation-line">
+                    <span className="demarcation-label">Historical Data Ends / Projections Begin</span>
+                  </div>
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
