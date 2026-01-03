@@ -131,6 +131,8 @@
 
 .year-labels span {
   font-weight: 500;
+  position: relative;
+  flex-shrink: 0;
 }
 
 .year-badge {
