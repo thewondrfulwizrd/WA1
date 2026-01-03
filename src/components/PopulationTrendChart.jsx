@@ -27,9 +27,9 @@ export function PopulationTrendChart({ data, scenarios, selectedYear, onYearChan
   const maxPop = Math.max(...chartData.map(d => d.total));
   const popRange = maxPop - minPop;
 
-  // Calculate chart dimensions
+  // Calculate chart dimensions - INCREASED HEIGHT
   const width = 1000;
-  const height = 300;
+  const height = 340; // Increased from 300
   const padding = { top: 30, right: 20, bottom: 40, left: 60 };
   const chartWidth = width - padding.left - padding.right;
   const chartHeight = height - padding.top - padding.bottom;
@@ -59,18 +59,17 @@ export function PopulationTrendChart({ data, scenarios, selectedYear, onYearChan
   const currentPoint = points[currentIndex];
   const currentPopulation = chartData[currentIndex]?.total;
   
-  // Calculate population at base year (2025)
-  const baseYearIndex = chartData.findIndex(d => d.year === 2025);
-  const baseYearPopulation = chartData[baseYearIndex]?.total || currentPopulation;
-  
-  // Calculate change from 2025
-  let changeFrom2025Percent = '-';
-  let changeFrom2025Nominal = '-';
-  if (selectedYear >= 2025) {
-    const nominalChange = currentPopulation - baseYearPopulation;
-    const percentChange = (nominalChange / baseYearPopulation) * 100;
-    changeFrom2025Percent = `${percentChange >= 0 ? '+' : ''}${percentChange.toFixed(1)}%`;
-    changeFrom2025Nominal = `${nominalChange >= 0 ? '+' : ''}${(nominalChange / 1000000).toFixed(2)}M`;
+  // Calculate ANNUAL change instead of change from 2025
+  let annualChangePercent = '-';
+  let annualChangeNominal = '-';
+  if (currentIndex > 0) {
+    const previousPopulation = chartData[currentIndex - 1]?.total;
+    if (previousPopulation) {
+      const nominalChange = currentPopulation - previousPopulation;
+      const percentChange = (nominalChange / previousPopulation) * 100;
+      annualChangePercent = `${percentChange >= 0 ? '+' : ''}${percentChange.toFixed(2)}%`;
+      annualChangeNominal = `${nominalChange >= 0 ? '+' : ''}${(nominalChange / 1000).toFixed(0)}K`;
+    }
   }
 
   // Y-axis labels
@@ -340,7 +339,7 @@ export function PopulationTrendChart({ data, scenarios, selectedYear, onYearChan
         </svg>
       </div>
 
-      {/* Simplified footer with population and change */}
+      {/* Simplified footer with population and ANNUAL change */}
       <div className="chart-footer-simple">
         <div className="population-display">
           <div className="population-main">
@@ -349,10 +348,10 @@ export function PopulationTrendChart({ data, scenarios, selectedYear, onYearChan
           <div className="population-label">Population in {selectedYear}</div>
         </div>
         <div className="change-display">
-          <div className="change-value" style={{ color: changeFrom2025Percent === '-' ? '#666' : (changeFrom2025Percent.startsWith('+') ? '#2e7d32' : '#c62828') }}>
-            {changeFrom2025Nominal} ({changeFrom2025Percent})
+          <div className="change-value" style={{ color: annualChangePercent === '-' ? '#666' : (annualChangePercent.startsWith('+') ? '#2e7d32' : '#c62828') }}>
+            {annualChangeNominal} ({annualChangePercent})
           </div>
-          <div className="change-label">Change from 2025</div>
+          <div className="change-label">Annual Change</div>
         </div>
       </div>
     </div>
