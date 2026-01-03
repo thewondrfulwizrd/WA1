@@ -9,12 +9,12 @@
 .canada-flag {
   display: flex;
   justify-content: center;
-  margin-bottom: 6px; /* REDUCED: from 16px to 6px to save 10px */
+  margin-bottom: 4px; /* REDUCED: from 16px to 6px to save 10px */
   padding-top: 0; /* REDUCED: removed padding-top (was 16px) to save 16px. Total saved: 40px */
 }
 
 .canada-flag img {
-  width: 150px;
+  width: 100px;
   height: auto;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
   object-fit: contain;
