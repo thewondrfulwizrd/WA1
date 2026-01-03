@@ -16,7 +16,7 @@ export async function loadHistoricalBirths() {
       
       const refDate = matches[0].replace(/"/g, '').trim();
       const genderField = matches[3].replace(/"/g, '').trim();
-      const valueStr = matches[10].replace(/"/g, '').trim();
+      const valueStr = matches[10].replace(/"/g, '').trim(); // INDEX 10 for births
       const value = parseInt(valueStr, 10);
       
       if (isNaN(value)) return;
@@ -123,7 +123,7 @@ export async function loadHistoricalMigration() {
       const genderField = matches[3].replace(/"/g, '').trim();
       const migrationType = matches[4].replace(/"/g, '').trim();
       const ageGroup = matches[5].replace(/"/g, '').trim();
-      const valueStr = matches[12].replace(/"/g, '').trim();
+      const valueStr = matches[12].replace(/"/g, '').trim(); // Migration VALUE is at index 12
       const value = parseInt(valueStr, 10) || 0;
       
       // Migration uses fiscal years (YYYY/YYYY) - extract start year
