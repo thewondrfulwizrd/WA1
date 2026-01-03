@@ -1,6 +1,7 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { getPopulationByYear } from '../utils/populationHelpers';
 import { applyScenarios } from '../utils/scenarioCalculations';
+import { loadHistoricalBirths, loadHistoricalDeaths, loadHistoricalMigration } from '../utils/historicalDataLoader';
 import './PopulationStatsTable.css';
 
 const BASELINE_MIGRATION = 400000;
@@ -8,8 +9,29 @@ const BASELINE_FERTILITY = 1.5;
 const BASELINE_MORTALITY = 8.0; // Deaths per 1000 population (realistic rate for Canada)
 
 export function PopulationStatsTable({ data, scenarios, selectedYear }) {
+  const [historicalBirths, setHistoricalBirths] = useState({});
+  const [historicalDeaths, setHistoricalDeaths] = useState({});
+  const [historicalMigration, setHistoricalMigration] = useState({});
+  const [dataLoaded, setDataLoaded] = useState(false);
+
+  // Load historical data on mount
+  useEffect(() => {
+    async function loadData() {
+      const [births, deaths, migration] = await Promise.all([
+        loadHistoricalBirths(),
+        loadHistoricalDeaths(),
+        loadHistoricalMigration()
+      ]);
+      setHistoricalBirths(births);
+      setHistoricalDeaths(deaths);
+      setHistoricalMigration(migration);
+      setDataLoaded(true);
+    }
+    loadData();
+  }, []);
+
   const tableData = useMemo(() => {
-    if (!data) return [];
+    if (!data || !dataLoaded) return [];
 
     // Show EVERY year instead of every 5 years
     const years = [...data.yearsObserved, ...data.yearsProjected];
@@ -22,24 +44,41 @@ export function PopulationStatsTable({ data, scenarios, selectedYear }) {
       const femaleTotal = population.female.reduce((sum, val) => sum + val, 0);
       const total = maleTotal + femaleTotal;
 
-      // Calculate growth
+      // Calculate growth (set to "-" for year 2000)
       let nominalGrowth = 0;
       let percentGrowth = 0;
-      if (previousTotal !== null) {
+      let showGrowth = true; // false for 2000
+      
+      if (year === 2000) {
+        showGrowth = false;
+      } else if (previousTotal !== null) {
         nominalGrowth = total - previousTotal;
         percentGrowth = (nominalGrowth / previousTotal) * 100; // Per year
       }
 
-      // Estimate demographic indicators based on scenario adjustments
-      const adjustedFertility = BASELINE_FERTILITY * (1 + scenarios.fertility / 100);
-      const adjustedMortality = BASELINE_MORTALITY * (1 - scenarios.mortality / 100); // Lower is better
-      const adjustedMigration = Math.round(BASELINE_MIGRATION * (1 + scenarios.migration / 100));
+      // Determine if this is a historical year (≤ 2025)
+      const isHistorical = year <= data.lastObservedYear;
       
-      // Calculate births and deaths based on population and rates
-      const births = Math.round((total / 1000) * (adjustedFertility * 6.67)); // TFR to crude birth rate approximation
-      const deaths = Math.round((total / 1000) * adjustedMortality); // Deaths per 1000
+      // Use actual data for historical years, calculated for projected
+      let births, deaths, netMigration;
+      
+      if (isHistorical) {
+        // Use actual historical data from Statistics Canada
+        births = historicalBirths[year] || 0;
+        deaths = historicalDeaths[year] || 0;
+        netMigration = Math.round(historicalMigration[year] || 0);
+      } else {
+        // Use scenario-adjusted calculations for projected years
+        const adjustedFertility = BASELINE_FERTILITY * (1 + scenarios.fertility / 100);
+        const adjustedMortality = BASELINE_MORTALITY * (1 - scenarios.mortality / 100);
+        const adjustedMigration = Math.round(BASELINE_MIGRATION * (1 + scenarios.migration / 100));
+        
+        births = Math.round((total / 1000) * (adjustedFertility * 6.67));
+        deaths = Math.round((total / 1000) * adjustedMortality);
+        netMigration = adjustedMigration;
+      }
+      
       const naturalIncrease = births - deaths;
-      const netMigration = adjustedMigration;
 
       previousTotal = total;
 
@@ -48,13 +87,15 @@ export function PopulationStatsTable({ data, scenarios, selectedYear }) {
         population: total,
         nominalGrowth,
         percentGrowth,
+        showGrowth,
         births,
         deaths,
         naturalIncrease,
-        netMigration
+        netMigration,
+        isHistorical
       };
     });
-  }, [data, scenarios]);
+  }, [data, scenarios, dataLoaded, historicalBirths, historicalDeaths, historicalMigration]);
 
   if (!tableData.length) return null;
 
@@ -84,7 +125,7 @@ export function PopulationStatsTable({ data, scenarios, selectedYear }) {
           <tbody>
             {tableData.map((row) => (
               <React.Fragment key={row.year}>
-                <tr className={`${row.year === selectedYear ? 'highlighted' : ''} ${row.year <= data.lastObservedYear ? 'historical' : 'projected'}`}>
+                <tr className={`${row.year === selectedYear ? 'highlighted' : ''} ${row.isHistorical ? 'historical' : 'projected'}`}>
                   <td className="year-cell">
                     <span className="year-value">{row.year}</span>
                     {row.year === selectedYear && <span className="current-badge">◄ Current</span>}
@@ -93,10 +134,10 @@ export function PopulationStatsTable({ data, scenarios, selectedYear }) {
                     {(row.population / 1000000).toFixed(2)}M
                   </td>
                   <td className={`number-cell growth-cell ${row.nominalGrowth >= 0 ? 'positive' : 'negative'}`}>
-                    {row.nominalGrowth > 0 ? '+' : ''}{(row.nominalGrowth / 1000).toFixed(0)}K
+                    {!row.showGrowth ? '-' : (row.nominalGrowth > 0 ? '+' : '') + (row.nominalGrowth / 1000).toFixed(0) + 'K'}
                   </td>
                   <td className={`number-cell growth-cell ${row.percentGrowth >= 0 ? 'positive' : 'negative'}`}>
-                    {row.percentGrowth > 0 ? '+' : ''}{row.percentGrowth.toFixed(2)}%
+                    {!row.showGrowth ? '-' : (row.percentGrowth > 0 ? '+' : '') + row.percentGrowth.toFixed(2) + '%'}
                   </td>
                   <td className="number-cell">
                     {(row.births / 1000).toFixed(0)}K
@@ -112,7 +153,7 @@ export function PopulationStatsTable({ data, scenarios, selectedYear }) {
                   </td>
                 </tr>
                 {/* Add demarcation line between 2025 and 2026 */}
-                {row.year === 2025 && (
+                {row.year === data.lastObservedYear && (
                   <tr className="demarcation-row">
                     <td colSpan="8">
                       <div className="demarcation-line">
