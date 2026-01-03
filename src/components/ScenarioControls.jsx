@@ -62,15 +62,15 @@ export function ScenarioControls({ scenarios, onScenarioChange, onReset, isHisto
           </div>
         </div>
 
-        {/* Mortality Rate Slider - INVERTED COLORS */}
+        {/* Mortality Rate Slider - INVERTED COLORS AND BADGE */}
         <div className="scenario-item">
           <div className="scenario-label-row">
             <label>
               <span className="scenario-icon">🏥</span>
               Mortality Rate
             </label>
-            {/* Positive % = higher mortality (red/bad), Negative % = lower mortality (green/good) */}
-            <span className={`scenario-value ${scenarios.mortality === 0 ? 'baseline' : scenarios.mortality > 0 ? 'increase' : 'decrease'}`}>
+            {/* INVERTED: Positive % = RED (worse), Negative % = GREEN (better) */}
+            <span className={`scenario-value ${scenarios.mortality === 0 ? 'baseline' : scenarios.mortality > 0 ? 'decrease' : 'increase'}`}>
               {scenarios.mortality > 0 ? '+' : ''}{scenarios.mortality}%
             </span>
           </div>
