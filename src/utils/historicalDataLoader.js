@@ -18,7 +18,7 @@ export async function loadHistoricalBirths() {
       const genderField = matches[3].replace(/"/g, '').trim();
       const value = parseInt(matches[10].replace(/"/g, '').trim(), 10);
       
-      // Extract year from "YYYY/YYYY" format
+      // Extract year - births uses calendar years (YYYY)
       const year = parseInt(refDate.split('/')[0]);
       
       // Only count "Total - gender" to avoid double-counting
@@ -43,16 +43,17 @@ export async function loadHistoricalDeaths() {
     const deathsByYear = {};
     lines.forEach(line => {
       const matches = line.match(/"([^"]*)"|[^,]+/g);
-      if (!matches || matches.length < 11) return;
+      if (!matches || matches.length < 12) return;
       
+      // Deaths CSV: REF_DATE (index 0), GEO, DGUID, Age, Sex, UOM, ..., VALUE (index 11)
       const refDate = matches[0].replace(/"/g, '').trim();
-      const genderField = matches[3].replace(/"/g, '').trim();
-      const value = parseInt(matches[10].replace(/"/g, '').trim(), 10);
+      const ageGroup = matches[3].replace(/"/g, '').trim();
+      const value = parseInt(matches[11].replace(/"/g, '').trim(), 10);
       
-      const year = parseInt(refDate.split('/')[0]);
+      const year = parseInt(refDate);
       
-      // Only count "Total - gender" to avoid double-counting
-      if (genderField === 'Total - gender') {
+      // Only count "Age at time of death, all ages" to get total
+      if (ageGroup === 'Age at time of death, all ages') {
         deathsByYear[year] = value;
       }
     });
@@ -60,6 +61,36 @@ export async function loadHistoricalDeaths() {
     return deathsByYear;
   } catch (error) {
     console.error('Error loading deaths data:', error);
+    return {};
+  }
+}
+
+export async function loadHistoricalMortality() {
+  try {
+    const response = await fetch('/data/source/Base_Mortality.csv');
+    const csv = await response.text();
+    const lines = csv.trim().split('\n').slice(1); // Skip header
+    
+    const mortalityByYear = {};
+    lines.forEach(line => {
+      const matches = line.match(/"([^"]*)"|[^,]+/g);
+      if (!matches || matches.length < 12) return;
+      
+      const refDate = matches[0].replace(/"/g, '').trim();
+      const ageGroup = matches[3].replace(/"/g, '').trim();
+      const value = parseFloat(matches[11].replace(/"/g, '').trim()) || 0;
+      
+      const year = parseInt(refDate);
+      
+      // Only count "All ages" to get overall mortality rate
+      if (ageGroup.includes('All ages')) {
+        mortalityByYear[year] = value;
+      }
+    });
+    
+    return mortalityByYear;
+  } catch (error) {
+    console.error('Error loading mortality data:', error);
     return {};
   }
 }
@@ -84,6 +115,7 @@ export async function loadHistoricalMigration() {
       const ageGroup = matches[5].replace(/"/g, '').trim();
       const value = parseInt(matches[12].replace(/"/g, '').trim(), 10) || 0;
       
+      // Migration uses fiscal years (YYYY/YYYY) - extract start year
       const year = parseInt(refDate.split('/')[0]);
       
       // Only count "Total - gender" and "All ages" to get totals
