@@ -9,19 +9,19 @@
 .canada-flag {
   display: flex;
   justify-content: center;
-  margin-bottom: var(--space-16);
+  margin-bottom: 6px; /* REDUCED: from 16px to 6px to save 10px */
   padding-top: 0; /* REDUCED: removed padding-top (was 16px) to save 16px. Total saved: 40px */
 }
 
 .canada-flag img {
-  width: 120px;
+  width: 150px;
   height: auto;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
   object-fit: contain;
 }
 
 .population-pyramid h1 {
-  margin: 0 0 24px 0;
+  margin: 0 0 14px 0; /* REDUCED: bottom margin from 24px to 14px to save 10px */
   font-size: 2.2em;
   font-weight: 600;
   color: #000000;
