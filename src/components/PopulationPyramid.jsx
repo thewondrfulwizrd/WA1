@@ -57,9 +57,9 @@ export function PopulationPyramid() {
 
   return (
     <div className="population-pyramid">
-      {/* Canadian Flag Emoji */}
+      {/* Canadian Flag Image */}
       <div className="canada-flag">
-        🇨🇦
+        <img src="/canadaflag1.png" alt="Canada Flag" />
       </div>
       
       <h1>Canada Population Growth Model, 2025-2100</h1>
