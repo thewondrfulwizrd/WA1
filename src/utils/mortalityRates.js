@@ -32,29 +32,30 @@ export async function loadMortalityRates() {
     const lines = csv.trim().split('\n').slice(1); // Skip header
     console.log('[MortalityRates] Number of data lines:', lines.length);
 
-    // Map of age group names to indices (based on pyramid age groups)
+    // Map of age group names to indices
+    // CRITICAL: Use EXACT strings from CSV file
     const ageGroupIndices = {
-      '0 to 4 years': 0,
-      '5 to 9 years': 1,
-      '10 to 14 years': 2,
-      '15 to 19 years': 3,
-      '20 to 24 years': 4,
-      '25 to 29 years': 5,
-      '30 to 34 years': 6,
-      '35 to 39 years': 7,
-      '40 to 44 years': 8,
-      '45 to 49 years': 9,
-      '50 to 54 years': 10,
-      '55 to 59 years': 11,
-      '60 to 64 years': 12,
-      '65 to 69 years': 13,
-      '70 to 74 years': 14,
-      '75 to 79 years': 15,
-      '80 to 84 years': 16,
-      '85 to 89 years': 17,
-      '90 to 94 years': 18,
-      '95 to 99 years': 19,
-      '100 years and over': 20
+      'Age at time of death, 1 to 4 years': 0,      // Use for 0-4 cohort (close enough)
+      'Age at time of death, 5 to 9 years': 1,
+      'Age at time of death, 10 to 14 years': 2,
+      'Age at time of death, 15 to 19 years': 3,
+      'Age at time of death, 20 to 24 years': 4,
+      'Age at time of death, 25 to 29 years': 5,
+      'Age at time of death, 30 to 34 years': 6,
+      'Age at time of death, 35 to 39 years': 7,
+      'Age at time of death, 40 to 44 years': 8,
+      'Age at time of death, 45 to 49 years': 9,
+      'Age at time of death, 50 to 54 years': 10,
+      'Age at time of death, 55 to 59 years': 11,
+      'Age at time of death, 60 to 64 years': 12,
+      'Age at time of death, 65 to 69 years': 13,
+      'Age at time of death, 70 to 74 years': 14,
+      'Age at time of death, 75 to 79 years': 15,
+      'Age at time of death, 80 to 84 years': 16,
+      'Age at time of death, 85 to 89 years': 17,
+      'Age at time of death, 90 to 94 years': 18,
+      'Age at time of death, 95 to 99 years': 19,
+      'Age at time of death, 100 years and over': 20
     };
 
     const maleRates = new Array(21).fill(0);
@@ -65,14 +66,15 @@ export async function loadMortalityRates() {
 
     lines.forEach(line => {
       const matches = line.match(/"([^"]*)"|[^,]+/g);
-      if (!matches || matches.length < 12) return;
+      if (!matches || matches.length < 13) return;
       
       rowsParsed++;
 
+      // Extract fields (adjust column indices based on CSV structure)
       const refDate = matches[0].replace(/"/g, '').trim();
-      const sex = matches[4].replace(/"/g, '').trim();
       const ageGroup = matches[3].replace(/"/g, '').trim();
-      const valueStr = matches[11].replace(/"/g, '').trim();
+      const sex = matches[4].replace(/"/g, '').trim();
+      const valueStr = matches[12].replace(/"/g, '').trim();
       const value = parseFloat(valueStr);
 
       if (isNaN(value) || refDate !== '2023') return;
@@ -85,10 +87,10 @@ export async function loadMortalityRates() {
         rowsMatched++;
         if (sex === 'Males') {
           maleRates[ageIndex] = value;
-          console.log(`[MortalityRates] Male ${ageGroup}: ${value}/1000`);
+          console.log(`[MortalityRates] Male [${ageIndex}] ${ageGroup}: ${value}/1000`);
         } else if (sex === 'Females') {
           femaleRates[ageIndex] = value;
-          console.log(`[MortalityRates] Female ${ageGroup}: ${value}/1000`);
+          console.log(`[MortalityRates] Female [${ageIndex}] ${ageGroup}: ${value}/1000`);
         }
       }
     });
